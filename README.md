@@ -1,14 +1,31 @@
-# Sistema de Lista de Tarefas 
-Este é um sistema simples de lista de tarefas (To-Do List) que permite ao usuário adicionar, editar, excluir e marcar tarefas como concluídas. A aplicação é projetada para ser fácil de usar e tem como objetivo ajudar na organização do dia a dia. 
+# Quadro de Atividades e Gestão de Equipes
 
-# Funcionalidades 
+Este projeto foi desenvolvido para auxiliar estabelecimentos na organização e distribuição de atividades, melhorando a gestão e evitando problemas operacionais que possam impactar o atendimento ao cliente ou a manutenção do local.
 
-- Adicionar Tarefas: O usuário pode adicionar novas tarefas à lista. 
+Com essa solução, é possível criar, atribuir e monitorar tarefas de forma eficiente, seja para equipes ou indivíduos, garantindo um fluxo de trabalho mais organizado e produtivo.
 
-- Visualizar Tarefas: A lista de tarefas pode ser visualizada, com as tarefas ainda pendentes e as concluídas separadas. 
+##  Funcionalidades
 
-- Editar Tarefas: O usuário pode editar o título ou descrição das tarefas existentes. 
+-  Criação de tarefas  
+-  Visualização de atribuições  
+-  Monitoramento do progresso das atividades  
+-  Categorizacao de tarefas  
+-  Criação de usuarios 
+-  Criação e gerenciamento de equipes  
 
-- Excluir Tarefas: O usuário pode excluir tarefas da lista. 
+##  Requisitos
 
-- Marcar como Concluída: O usuário pode marcar tarefas como "concluídas", e a tarefa será movida para uma lista de tarefas concluídas. 
+###  Requisitos Funcionais
+- Permitir a criação, atribuição e acompanhamento de tarefas
+- Exibir as atividades de forma clara e organizada
+- Monitorar o progresso das tarefas
+- Categorizar atividades para melhor organização
+- Possibilitar o acompanhamento individual das tarefas
+- Suporte para criação e gestão de equipes
+
+###  Requisitos Não Funcionais
+- Interface personalizável
+- Comunicação rápida com o servidor
+- Seguir a paleta de cores padrão da empresa
+- Desenvolvido em **HTML**
+- Interface intuitiva e fácil de usar
