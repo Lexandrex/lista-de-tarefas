@@ -43,47 +43,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
   <script src="js/supabase.js"></script>
-  <script type="module">
-    import { supabase } from './js/supabase.js';
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      await carregarUsuario();
-
-      document.getElementById('logoutButton').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = "index.html";
-      });
-    });
-
-    async function carregarUsuario() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (!user) {
-        alert("Sessão expirada ou não autenticada. Faça login novamente.");
-        window.location.href = "index.html";
-        return;
-      }
-
-      const userNameOrEmailElement = document.getElementById("userNameOrEmail");
-      let displayName = user.email;
-
-      const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('name, role')
-          .eq('id', user.id)
-          .single();
-
-      if (profileError && profileError.code !== 'PGRST116') {
-          console.error("Erro ao buscar perfil do usuário:", profileError);
-      } else if (userProfile && userProfile.name) {
-          displayName = userProfile.name;
-      }
-      userNameOrEmailElement.textContent = displayName;
-
-      if (userProfile && userProfile.role === 'admin') {
-        document.getElementById("adminButtons").style.display = 'block';
-      }
-    }
-  </script>
+  <script src="js/dashbooard.js" type="module"></script>
 </body>
 </html>
