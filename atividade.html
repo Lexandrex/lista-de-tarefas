@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style src="css/estilo.css"></style>
+</head>
+<body class="bg-light">
+
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="dashboard.html">Tarefa App</a>
+      <div class="ms-auto d-flex align-items-center">
+        <a href="perfil.html" class="btn btn-outline-light rounded-circle p-2 me-2" title="Meu Perfil">
+          <i class="bi bi-person-circle fs-5"></i> </a>
+        <button class="btn btn-outline-light" id="logoutButton">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <h2 class="mb-4">Minhas Atividades</h2>
+    <p class="text-muted">Visualize suas tarefas no calendário e acompanhe detalhes na lista abaixo.</p>
+
+    <div id="calendar-container">
+      <div id="calendar"></div>
+    </div>
+
+    <hr class="my-5">
+
+    <h3 class="mb-4">Lista de Tarefas</h3>
+
+    <div id="activitiesListContainer">
+      <div class="alert alert-info text-center" role="alert" id="loadingActivitiesMessage">
+        Carregando suas atividades...
+      </div>
+      <div class="alert alert-warning text-center" role="alert" id="noActivitiesMessage" style="display: none;">
+        Você não tem atividades atribuídas no momento.
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="activityDetailModal" tabindex="-1" aria-labelledby="activityDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="activityDetailModalLabel">Detalhes da Atividade</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="updateActivityForm">
+            <input type="hidden" id="detailActivityId">
+            <div class="mb-3">
+              <label for="detailActivityName" class="form-label">Nome da Atividade</label>
+              <input type="text" class="form-control" id="detailActivityName" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="detailActivityDescription" class="form-label">Descrição</label>
+              <textarea class="form-control" id="detailActivityDescription" rows="3" readonly></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="detailActivityStartDate" class="form-label">Data de Início</label>
+              <input type="date" class="form-control" id="detailActivityStartDate" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="detailActivityDueDate" class="form-label">Data de Entrega</label>
+              <input type="date" class="form-control" id="detailActivityDueDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="detailAssignedUsers" class="form-label">Usuários Atribuídos</label>
+              <p id="detailAssignedUsersList" class="form-control-plaintext"></p>
+            </div>
+            <div class="mb-3">
+              <label for="detailActivityStatus" class="form-label">Status</label>
+              <select class="form-select" id="detailActivityStatus">
+                <option value="pending">Pendente</option>
+                <option value="in_progress">Em Andamento</option>
+                <option value="completed">Concluída</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" id="saveActivityDetailsBtn">Salvar Alterações</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="js/supabase.js"></script>
+  <script type="module" src="js/atividade.js"></script>
+
+</body>
+</html>
