@@ -1,5 +1,4 @@
-
-    import { supabase } from './js/supabase.js';
+import { supabase } from './supabase.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
       await carregarUsuario();
