@@ -25,3 +25,4 @@ lerna-debug.log*
 .supabase
 
 /coverage
+/old_stuff
