@@ -21,7 +21,5 @@ client/.env
 client/.env.*
 !client/.env.example
 .supabase
-.env.local
-.env.*
-.next/
-out/
+
+/coverage
