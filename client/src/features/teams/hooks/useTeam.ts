@@ -1,6 +1,7 @@
+/*
 import { useQuery } from '@tanstack/react-query';
-import { useOrgId } from '@/lib/db';
-import { supabase } from '@/lib/supabase/browserClient';
+import { useOrgId } from '../../../lib/db';
+import { supabase } from "@/lib/supabase";
 
 export function useTeams() {
   const org_id = useOrgId();
@@ -18,3 +19,4 @@ export function useTeams() {
     },
   });
 }
+*/

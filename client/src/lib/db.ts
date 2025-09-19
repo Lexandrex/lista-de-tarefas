@@ -1,35 +1,72 @@
-import { useProfile } from './auth';
-import { supabase } from './supabase/browserClient';
+import { supabase } from "@/lib/supabase";
+import type {
+  PostgrestResponse,
+  PostgrestSingleResponse,
+} from "@supabase/supabase-js";
 
-export function useOrgId(): string | null {
-  const { data: profile } = useProfile();
-  return profile?.org_id ?? null;
-}
-
-export async function orgSelect<T = any>(
+export async function orgSelectMany<T = any>(
   table: string,
   org_id: string,
-  select: string = '*'
-) {
-  return supabase.from<T>(table).select(select).eq('org_id', org_id);
+  select = "*"
+): Promise<PostgrestResponse<T>> {
+  const res = await supabase
+    .from<any, any>(table)
+    .select(select as any)
+    .eq("org_id", org_id);
+  return res as PostgrestResponse<T>;
 }
 
-export async function orgInsert<T extends Record<string, any>>(
+export async function orgSelectOne<T = any>(
   table: string,
   org_id: string,
-  payload: T | T[]
-) {
-  const rows = Array.isArray(payload) ? payload : [payload];
-  return supabase.from(table).insert(rows.map(r => ({ ...r, org_id })));
+  select = "*"
+): Promise<PostgrestSingleResponse<T>> {
+  const res = await supabase
+    .from<any, any>(table)
+    .select(select as any)
+    .eq("org_id", org_id)
+    .maybeSingle();
+  return res as PostgrestSingleResponse<T>;
 }
 
-export async function orgUpdate<T extends Record<string, any>>(
+export async function orgInsert<T = any>(
+  table: string,
+  org_id: string,
+  payload: Record<string, any>
+): Promise<PostgrestSingleResponse<T>> {
+  const res = await supabase
+    .from<any, any>(table)
+    .insert({ ...payload, org_id })
+    .select()
+    .maybeSingle();
+  return res as PostgrestSingleResponse<T>;
+}
+
+export async function orgUpdate<T = any>(
   table: string,
   org_id: string,
   match: Record<string, any>,
-  values: Partial<T>
-) {
-  return supabase.from(table).update(values).match({ ...match, org_id });
+  patch: Record<string, any>
+): Promise<PostgrestResponse<T>> {
+  const res = await supabase
+    .from<any, any>(table)
+    .update(patch)
+    .match({ ...match, org_id })
+    .select();
+  return res as PostgrestResponse<T>;
+}
+
+export async function orgUpsert<T = any>(
+  table: string,
+  org_id: string,
+  payload: Record<string, any>
+): Promise<PostgrestSingleResponse<T>> {
+  const res = await supabase
+    .from<any, any>(table)
+    .upsert({ ...payload, org_id })
+    .select()
+    .maybeSingle();
+  return res as PostgrestSingleResponse<T>;
 }
 
 export async function orgDelete(
@@ -37,12 +74,9 @@ export async function orgDelete(
   org_id: string,
   match: Record<string, any>
 ) {
-  return supabase.from(table).delete().match({ ...match, org_id });
+  return supabase.from<any, any>(table).delete().match({ ...match, org_id });
 }
 
-export async function listTeams(org_id: string) {
-  return orgSelect('teams', org_id, '*');
-}
-export async function createTeam(org_id: string, name: string, description?: string) {
-  return orgInsert('teams', org_id, { name, description });
+export async function listOrgUsers(orgId: string) {
+  return supabase.from("profiles").select("id,email,org_id").eq("org_id", orgId);
 }

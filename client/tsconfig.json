@@ -1,6 +1,12 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/lib/supabase": ["src/lib/supabase/browserClient.mts"],
+      "@/*": ["src/*"],
+      "@/lib/supabase/*": ["src/lib/supabase/*"]
+    },
     // File Layout
     // "rootDir": "./src",
     // "outDir": "./dist",
@@ -31,7 +37,8 @@
     // "noUnusedParameters": true,
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
-
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
