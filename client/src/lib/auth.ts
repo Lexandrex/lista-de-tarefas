@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from './supabase/browserClient';
+import { supabase } from "@/lib/supabase";
 
 export type Role = 'admin' | 'manager' | 'member';
 
