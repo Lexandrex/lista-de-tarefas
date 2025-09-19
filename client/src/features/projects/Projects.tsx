@@ -30,6 +30,7 @@ export default function Projects() {
       orgSelectMany<Team>("teams", orgId, "id,name,org_id"),
     ]);
 
+    
     if (projRes.error) setError(projRes.error.message);
     if (teamRes.error) setError(teamRes.error.message || error);
 
