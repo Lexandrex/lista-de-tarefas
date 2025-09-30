@@ -2,9 +2,64 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useOrgId } from "@/lib/useOrgId";
 import { orgSelectMany, orgInsert, orgUpdate, orgDelete } from "@/lib/db";
+import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 
-type Team   = { id: string; name: string; org_id: string };
+const HEADER_H = 64;
+const SIDEBAR_W = 240;
+
+type Team = { id: string; name: string; org_id: string };
 type Project = { id: string; name: string; description?: string | null; org_id: string; team_id?: string | null };
+
+const card = {
+  background: "white",
+  borderRadius: 8,
+  padding: 24,
+  marginBottom: 24,
+  boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+};
+
+const title = {
+  fontSize: 24,
+  fontWeight: "500",
+  color: "#111827",
+  marginBottom: 24,
+};
+
+const formGroupStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: "12px",
+  fontWeight: "500",
+  color: "#374151",
+  textAlign: "left",
+};
+
+const inputStyle: React.CSSProperties = {
+  height: "36px",
+  padding: "4px 12px",
+  border: "1px solid #e5e7eb",
+  borderRadius: "6px",
+  fontSize: "14px",
+  width: "100%",
+  outline: "none",
+  transition: "border-color 0.2s ease",
+};
+
+const buttonStyle: React.CSSProperties = {
+  backgroundColor: "#2563eb",
+  color: "white",
+  border: "none",
+  padding: "10px 20px",
+  borderRadius: "6px",
+  fontWeight: "500",
+  fontSize: "14px",
+  transition: "background-color 0.2s ease",
+};
 
 export default function Projects() {
   const { orgId, loading: orgLoading, err: orgErr } = useOrgId();
@@ -92,32 +147,92 @@ export default function Projects() {
   if (!orgId) return <div style={{padding:16}}>Your profile has no org_id. Check signup trigger/backfill.</div>;
 
   return (
-    <div style={{maxWidth: 960, margin:"32px auto", padding:"0 16px"}}>
-      <h2 style={{marginBottom:12}}>Projects</h2>
-      <div style={{display:"grid", gap:8, gridTemplateColumns:"1fr 2fr 1fr auto"}}>
-        <input
-          placeholder="Project name"
-          value={form.name}
-          onChange={e=>setForm(s=>({ ...s, name: e.target.value }))}
-        />
-        <input
-          placeholder="Description (opcional)"
-          value={form.description}
-          onChange={e=>setForm(s=>({ ...s, description: e.target.value }))}
-        />
-        <select
-          value={form.team_id}
-          onChange={e=>setForm(s=>({ ...s, team_id: e.target.value }))}
-        >
-          <option value="">No team</option>
-          {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-        <button onClick={add} disabled={!canSubmit}>Add</button>
-      </div>
+    <>
+      <Header
+        appName="Lista de Tarefas"
+        onSearch={(q) => console.log("search:", q)}
+        onCreate={() => console.log("create")}
+        onBellClick={() => console.log("bell")}
+        onSettingsClick={() => console.log("settings")}
+        onProfileClick={() => console.log("profile")}
+      />
 
-      {error && <p style={{color:"crimson", marginTop:8}}>{error}</p>}
-      <div style={{marginTop:16}}>
-        {loading ? <p>Loading projects…</p> : (
+      <Sidebar />
+
+      <main
+        style={{
+          position: "fixed",
+          top: HEADER_H,
+          left: SIDEBAR_W,
+          right: 0,
+          bottom: 0,
+          overflowY: "auto",
+          background: "#f8fafc",
+          zIndex: 10,
+        }}
+      >
+        <div style={{ maxWidth: 1040, margin: "0 auto", padding: "20px 16px 32px" }}>
+          <section style={card}>
+            <h3 style={title}>Projects</h3>
+            
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+              maxWidth: "500px",
+              marginBottom: "20px"
+            }}>
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Project Name *</label>
+                <input
+                  style={inputStyle}
+                  placeholder="Enter project name"
+                  value={form.name}
+                  onChange={e=>setForm(s=>({ ...s, name: e.target.value }))}
+                />
+              </div>
+              
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Description</label>
+                <input
+                  style={inputStyle}
+                  placeholder="Enter project description (optional)"
+                  value={form.description}
+                  onChange={e=>setForm(s=>({ ...s, description: e.target.value }))}
+                />
+              </div>
+              
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Team</label>
+                <select
+                  style={inputStyle}
+                  value={form.team_id}
+                  onChange={e=>setForm(s=>({ ...s, team_id: e.target.value }))}
+                >
+                  <option value="">Select a team (optional)</option>
+                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <button 
+                  onClick={add} 
+                  disabled={!canSubmit}
+                  style={{
+                    ...buttonStyle,
+                    opacity: canSubmit ? 1 : 0.5,
+                    cursor: canSubmit ? "pointer" : "not-allowed",
+                    width: "200px"
+                  }}
+                >
+                  Add Project
+                </button>
+              </div>
+            </div>
+
+            {error && <p style={{color:"crimson", marginBottom:16}}>{error}</p>}
+            <div>
+              {loading ? <p>Loading projects…</p> : (
           <table style={{width:"100%", borderCollapse:"collapse"}}>
             <thead>
               <tr style={{textAlign:"left", borderBottom:"1px solid #e5e7eb"}}>
@@ -195,7 +310,10 @@ export default function Projects() {
             </tbody>
           </table>
         )}
-      </div>
-    </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
