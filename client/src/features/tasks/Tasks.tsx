@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useOrgId } from "@/lib/useOrgId";
 import { orgSelectMany, orgInsert, orgUpdate, orgDelete } from "@/lib/db";
+import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
+
+const HEADER_H = 64;
+const SIDEBAR_W = 240;
 
 type Project = { id: string; name: string; org_id: string };
 type Task = {
@@ -11,6 +16,56 @@ type Task = {
   description?: string | null;
   project_id?: string | null;
   org_id: string;
+};
+
+const card = {
+  background: "white",
+  borderRadius: 8,
+  padding: 24,
+  marginBottom: 24,
+  boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+};
+
+const title = {
+  fontSize: 24,
+  fontWeight: "500",
+  color: "#111827",
+  marginBottom: 24,
+};
+
+const formGroupStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: "12px",
+  fontWeight: "500",
+  color: "#374151",
+  textAlign: "left",
+};
+
+const inputStyle: React.CSSProperties = {
+  height: "36px",
+  padding: "4px 12px",
+  border: "1px solid #e5e7eb",
+  borderRadius: "6px",
+  fontSize: "14px",
+  width: "100%",
+  outline: "none",
+  transition: "border-color 0.2s ease",
+};
+
+const buttonStyle: React.CSSProperties = {
+  backgroundColor: "#2563eb",
+  color: "white",
+  border: "none",
+  padding: "10px 20px",
+  borderRadius: "6px",
+  fontWeight: "500",
+  fontSize: "14px",
+  transition: "background-color 0.2s ease",
 };
 
 export default function Tasks() {
@@ -110,39 +165,104 @@ export default function Tasks() {
   if (!orgId) return <div style={{padding:16}}>profile ta sem org_id</div>;
 
   return (
-    <div style={{maxWidth: 960, margin:"32px auto", padding:"0 16px"}}>
-      <h2 style={{marginBottom:12}}>Tasks</h2>
-      <div style={{display:"flex", gap:8, alignItems:"center", marginBottom:12}}>
-        <label>Filter by project:</label>
-        <select value={filterProject} onChange={e=>setFilterProject(e.target.value as string)}>
-          <option value="">All</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-      </div>
-      <div style={{display:"grid", gap:8, gridTemplateColumns:"2fr 2fr 1fr auto"}}>
-        <input
-          placeholder="Task title"
-          value={form.title}
-          onChange={e=>setForm(s=>({ ...s, title: e.target.value }))}
-        />
-        <input
-          placeholder="Description (optional)"
-          value={form.description}
-          onChange={e=>setForm(s=>({ ...s, description: e.target.value }))}
-        />
-        <select
-          value={form.project_id}
-          onChange={e=>setForm(s=>({ ...s, project_id: e.target.value }))}
-        >
-          <option value="">No project</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-        <button onClick={add} disabled={!canSubmit}>Add</button>
-      </div>
+    <>
+      <Header
+        appName="Lista de Tarefas"
+        onSearch={(q) => console.log("search:", q)}
+        onCreate={() => console.log("create")}
+        onBellClick={() => console.log("bell")}
+        onSettingsClick={() => console.log("settings")}
+        onProfileClick={() => console.log("profile")}
+      />
 
-      {error && <p style={{color:"crimson", marginTop:8}}>{error}</p>}
-      <div style={{marginTop:16}}>
-        {loading ? <p>Loading tasks…</p> : (
+      <Sidebar />
+
+      <main
+        style={{
+          position: "fixed",
+          top: HEADER_H,
+          left: SIDEBAR_W,
+          right: 0,
+          bottom: 0,
+          overflowY: "auto",
+          background: "#f8fafc",
+          zIndex: 10,
+        }}
+      >
+        <div style={{ maxWidth: 1040, margin: "0 auto", padding: "20px 16px 32px" }}>
+          <section style={card}>
+            <h3 style={title}>Tasks</h3>
+
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "24px",
+              maxWidth: "500px",
+              marginBottom: "20px"
+            }}>
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Task Title *</label>
+                <input
+                  style={inputStyle}
+                  placeholder="Enter task title"
+                  value={form.title}
+                  onChange={e=>setForm(s=>({ ...s, title: e.target.value }))}
+                />
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Description</label>
+                <input
+                  style={inputStyle}
+                  placeholder="Enter task description (optional)"
+                  value={form.description}
+                  onChange={e=>setForm(s=>({ ...s, description: e.target.value }))}
+                />
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Project</label>
+                <select
+                  style={inputStyle}
+                  value={form.project_id}
+                  onChange={e=>setForm(s=>({ ...s, project_id: e.target.value }))}
+                >
+                  <option value="">Select a project (optional)</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+
+              <div style={formGroupStyle}>
+                <label style={labelStyle}>Filter by Project</label>
+                <select 
+                  style={inputStyle}
+                  value={filterProject} 
+                  onChange={e=>setFilterProject(e.target.value as string)}
+                >
+                  <option value="">All Projects</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <button 
+                  onClick={add} 
+                  disabled={!canSubmit}
+                  style={{
+                    ...buttonStyle,
+                    opacity: canSubmit ? 1 : 0.5,
+                    cursor: canSubmit ? "pointer" : "not-allowed",
+                    width: "200px"
+                  }}
+                >
+                  Add Task
+                </button>
+              </div>
+            </div>
+
+            {error && <p style={{color:"crimson", marginBottom:16}}>{error}</p>}
+            <div style={{marginTop:16}}>
+              {loading ? <p>Loading tasks…</p> : (
           <table style={{width:"100%", borderCollapse:"collapse"}}>
             <thead>
               <tr style={{textAlign:"left", borderBottom:"1px solid #e5e7eb"}}>
@@ -224,7 +344,10 @@ export default function Tasks() {
             </tbody>
           </table>
         )}
-      </div>
-    </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
