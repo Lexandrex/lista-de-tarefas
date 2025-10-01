@@ -1,41 +1,13 @@
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/app/AuthProvider";
 import { Link } from "react-router-dom";
-
-const HEADER_H = 64;
-const SIDEBAR_W = 240;
 
 export default function App() {
   const session = useSession();
 
   return (
     <>
-      <Header
-        appName="Lista de Tarefas"
-        onSearch={(q) => console.log("search:", q)}
-        onCreate={() => console.log("create")}
-        onBellClick={() => console.log("bell")}
-        onSettingsClick={() => console.log("settings")}
-        onProfileClick={() => console.log("profile")}
-      />
-
-      <Sidebar />
-
-      {/* Centro */}
-      <main
-        style={{
-          position: "fixed",
-          top: HEADER_H,
-          left: SIDEBAR_W,
-          right: 0,
-          bottom: 0,
-          overflowY: "auto",
-          background: "#f8fafc",
-          zIndex: 10,
-        }}
-      >
+      <main>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "20px 16px 32px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div style={{ color: "#6b7280" }}>Bem vindo, {session?.user?.email}</div>
