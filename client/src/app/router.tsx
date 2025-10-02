@@ -1,30 +1,42 @@
 import { createBrowserRouter } from "react-router-dom";
+import Layout from "./Layout";
 import RequireAuth from "@/lib/RequireAuth";
-import Layout from "@/app/Layout";
-import App from "@/App";
+import AdminRoute from "@/lib/AdminRoute";
 import Login from "@/features/auth/Login";
 import RequestReset from "@/features/auth/RequestReset";
 import ResetPassword from "@/features/auth/ResetPassword";
-import Teams from "@/features/teams/Teams";
-import Projects from "@/features/projects/Projects";
-import Tasks from "@/features/tasks/Tasks";
+import TeamsPage from "@/features/teams/Teams";
+import ProjectsPage from "@/features/projects/Projects";
+import TasksPage from "@/features/tasks/Tasks";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/reset", element: <RequestReset /> },
-  { path: "/auth/reset", element: <ResetPassword /> },
+  { path: "/reset/:token", element: <ResetPassword /> },
   {
     element: <RequireAuth />,
     children: [
       {
         element: <Layout />,
         children: [
-          { index: true, element: <App /> },
-          { path: "teams", element: <Teams /> },
-          { path: "projects", element: <Projects /> },
-          { path: "tasks", element: <Tasks /> },
+          { index: true, element: <ProjectsPage /> },
+          { path: "projects", element: <ProjectsPage /> },
+          { path: "tasks", element: <TasksPage /> },
+          {
+            path: "teams",
+            element: (
+              <AdminRoute>
+                <TeamsPage />
+              </AdminRoute>
+            ),
+          }
+          // {
+          //   path: "admin",
+          //   element: <AdminRoute><AdminDashboard /></AdminRoute>
+          // }
         ],
       },
     ],
   },
+  { path: "*", element: <div>Not found</div> },
 ]);

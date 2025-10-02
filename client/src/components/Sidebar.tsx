@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { RoleGate } from "@/lib/RoleGate";
 
 const HEADER_H = 64;
 const SIDEBAR_W = 240;
@@ -20,11 +21,18 @@ export default function Sidebar() {
       }}
     >
       <div style={{ fontWeight: 700, margin: "8px 8px 12px" }}>Navegação</div>
+
       <nav style={{ display: "grid", gap: 6 }}>
         <NavItem to="/" label="Home" />
-        <NavItem to="/teams" label="Teams" />
+        <RoleGate required="admin">
+          <NavItem to="/teams" label="Teams" />
+        </RoleGate>
+
         <NavItem to="/projects" label="Projects" />
         <NavItem to="/tasks" label="Tasks" />
+        {
+        //<NavItem to="/agenda" label="Agenda" />
+        }
       </nav>
     </aside>
   );
