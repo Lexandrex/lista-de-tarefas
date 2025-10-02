@@ -1,16 +1,16 @@
 import { supabase } from "@/lib/supabase";
-import { useSession } from "@/app/AuthProvider";
+import { useAuth } from "@/app/AuthProvider";
 import { Link } from "react-router-dom";
 
 export default function App() {
-  const session = useSession();
+  const { user, isLoading } = useAuth(); 
 
   return (
     <>
       <main>
         <div style={{ maxWidth: 1040, margin: "0 auto", padding: "20px 16px 32px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <div style={{ color: "#6b7280" }}>Bem vindo, {session?.user?.email}</div>
+            <div style={{ color: "#6b7280" }}>Bem vindo, {user?.email}</div>
             <button onClick={() => supabase.auth.signOut()}>Sign out</button>
           </div>
 

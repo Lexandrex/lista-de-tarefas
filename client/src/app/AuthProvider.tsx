@@ -1,16 +1,86 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { Session } from "@supabase/supabase-js";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-const AuthCtx = createContext<Session | null>(null);
-export const useSession = () => useContext(AuthCtx);
+
+export type AuthValue = {
+  session: Session | null;
+  user: User | null;
+  profile: { org_id?: string | null; is_admin?: boolean } | null;
+  isLoading: boolean;
+};
+
+const AuthContext = createContext<AuthValue>({
+  session: null,
+  user: null,
+  profile: null,
+  isLoading: true,
+});
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<{ org_id?: string | null; is_admin?: boolean } | null>(null);
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
+    let active = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setSession(data.session ?? null);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (!active) return;
+      setSession(s);
+    });
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
-  return <AuthCtx.Provider value={session}>{children}</AuthCtx.Provider>;
+
+  useEffect(() => {
+    let active = true;
+    async function loadProfile() {
+      if (!session?.user?.id) {
+        setProfile(null);
+        setIsLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("org_id, is_admin")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (!active) return;
+      if (error) {
+        setProfile(null);
+      } else {
+        setProfile(data ?? null);
+      }
+      setIsLoading(false);
+    }
+    setIsLoading(true);
+    loadProfile();
+    return () => {
+      active = false;
+    };
+  }, [session?.user?.id]);
+
+  const value: AuthValue = useMemo(
+    () => ({
+      session,
+      user: session?.user ?? null,
+      profile,
+      isLoading,
+    }),
+    [session, profile, isLoading]
+  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): AuthValue {
+  return useContext(AuthContext);
 }

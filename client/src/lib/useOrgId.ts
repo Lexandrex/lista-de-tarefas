@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useSession } from "@/app/AuthProvider";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/app/AuthProvider";
 
 export function useOrgId() {
-  const session = useSession();
+  const { user, isLoading: authLoading } = useAuth();
   const [orgId, setOrgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -11,11 +11,15 @@ export function useOrgId() {
   useEffect(() => {
     let active = true;
     async function run() {
-      if (!session?.user?.id) { setLoading(false); return; }
+      if (authLoading || !user?.id) {
+        setLoading(false);
+        setOrgId(null);
+        return;
+      }
       const { data, error } = await supabase
         .from("profiles")
         .select("org_id")
-        .eq("id", session.user.id)
+        .eq("id", user.id)
         .maybeSingle();
       if (!active) return;
       if (error) setErr(error.message);
@@ -23,8 +27,14 @@ export function useOrgId() {
       setLoading(false);
     }
     run();
-    return () => { active = false; };
-  }, [session?.user?.id]);
-
+    return () => {
+      active = false;
+    };
+  }, [user?.id, authLoading]);
   return { orgId, loading, err };
+}
+
+export function useOrgKey(): string | null {
+  const { orgId, loading } = useOrgId();
+  return loading ? null : orgId;
 }

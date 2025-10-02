@@ -5,6 +5,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@supabase/auth-helpers-react": "^0.5.0",
     "@supabase/auth-helpers-shared": "^0.7.0",
     "react-router-dom": "^7.9.1"
