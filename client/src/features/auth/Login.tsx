@@ -153,8 +153,7 @@ export default function Login() {
                 fontWeight: mode === "signin" ? 600 : 400,
                 color: mode === "signin" ? "#2563eb" : "#6b7280",
               }}
-            >
-              Sign in
+            >  
             </button>
             <button 
               onClick={() => { setMode("signup"); setErr(null); setMsg(null); }} 
