@@ -154,6 +154,7 @@ export default function Login() {
                 color: mode === "signin" ? "#2563eb" : "#6b7280",
               }}
             >  
+              Logar
             </button>
             <button 
               onClick={() => { setMode("signup"); setErr(null); setMsg(null); }} 
@@ -164,7 +165,7 @@ export default function Login() {
                 color: mode === "signup" ? "#2563eb" : "#6b7280",
               }}
             >
-              Sign up
+              Registrar
             </button>
           </div>
 
@@ -202,7 +203,7 @@ export default function Login() {
                 cursor: loading ? "not-allowed" : "pointer"
               }}
             >
-              {loading ? "Aguarde" : mode === "signin" ? "Sign in" : "Sign up"}
+              {loading ? "Aguarde" : mode === "signin" ? "Logar" : "Registrar"}
             </button>
           </form>
 
