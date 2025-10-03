@@ -1,9 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useSession } from "../app/AuthProvider";
-
-export default function RequireAuth() {
-  const session = useSession();
-  if (session === undefined) return null;
-  if (!session) return <Navigate to="/login" replace />;
-  return <Outlet />;
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/app/useAuth";
+export default function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+  const loc = useLocation();
+  if (isLoading) return null;
+  if (!user) return <Navigate to="/login" replace state={{ from: loc }} />;
+  return <>{children}</>;
 }

@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/app/AuthProvider";
+import { useAuth } from "@/app/useAuth";
 
 export default function AdminRoute({ children }: { children: React.ReactNode }) {
   const { isLoading, profile } = useAuth();

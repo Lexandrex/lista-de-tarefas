@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RoleGate } from "@/lib/RoleGate";
-import { useAuth } from "@/app/AuthProvider";
+import { useAuth } from "@/app/useAuth";
 import {
   useTasks,
   useCreateTask,

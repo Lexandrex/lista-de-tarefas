@@ -1,172 +1,175 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/app/AuthProvider";
+import { z } from "zod";
 import { RoleGate } from "@/lib/RoleGate";
-import { useTeams, useMyTeams, useCreateTeam, useUpdateTeam, useDeleteTeam, type Team } from "./hooks/useTeam";
+import { useAuth } from "@/app/useAuth";
+import {
+  useTeams,
+  useCreateTeam,
+  useUpdateTeam,
+  useDeleteTeam,
+  type Team,
+} from "./hooks/useTeams";
 
-const schema = z.object({
+const teamSchema = z.object({
   id: z.string().optional(),
-  name: z.string().min(2, "Name is too short"),
+  name: z.string().min(2, "Name too short"),
   description: z.string().max(300).optional().nullable(),
 });
 
-const { register, handleSubmit, reset, formState } = useForm<FormValues>({
-  resolver: zodResolver(schema),
-});
-
-type FormValues = z.infer<typeof schema>;
+type TeamForm = z.infer<typeof teamSchema>;
 
 export default function TeamsPage() {
-  const { session, profile } = useAuth();
-  const userId = session?.user?.id ?? null;
-  const { data: allTeams, isLoading: loadingAll, error: errorAll } = useTeams();
-  const { data: myTeams, isLoading: loadingMine, error: errorMine } = useMyTeams(userId);
-  const createTeam = useCreateTeam();
-  const updateTeam = useUpdateTeam();
-  const deleteTeam = useDeleteTeam();
+  const { profile } = useAuth();
+  const { data: teams, isLoading, error } = useTeams();
+  const createMut = useCreateTeam();
+  const updateMut = useUpdateTeam();
+  const deleteMut = useDeleteTeam();
+
   const [editing, setEditing] = useState<Team | null>(null);
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<TeamForm>({ resolver: zodResolver(teamSchema) });
 
   function startCreate() {
     setEditing(null);
     reset({ name: "", description: "" });
   }
 
-  function startEdit(team: Team) {
-    setEditing(team);
-    reset({ id: team.id, name: team.name, description: team.description ?? "" });
+  function startEdit(t: Team) {
+    setEditing(t);
+    reset({
+      id: t.id,
+      name: t.name,
+      description: t.description ?? "",
+    });
   }
 
-  async function onSubmit(values: FormValues) {
+  const normalize = (v: TeamForm) => ({
+    name: v.name,
+    description: v.description ?? null,
+  });
+
+  async function onSubmit(values: TeamForm) {
     if (editing) {
-      await updateTeam.mutateAsync({ id: editing.id, name: values.name, description: values.description ?? null });
+      const { id: _drop, ...rest } = values;
+      await updateMut.mutateAsync({ id: editing.id, ...normalize(rest as TeamForm) });
     } else {
-      await createTeam.mutateAsync({ name: values.name, description: values.description ?? null });
+      await createMut.mutateAsync(normalize(values) as any);
     }
-    reset({ name: "", description: "" });
     setEditing(null);
+    reset({ name: "", description: "" });
   }
-
-  async function onDelete(id: string) {
-    if (confirm("Delete this team? This cannot be undone.")) {
-      await deleteTeam.mutateAsync(id);
-    }
-  }
-
-  const otherTeams = (allTeams ?? []).filter((t : any) => !(myTeams ?? []).some((m : any)=> m.id === t.id));
 
   return (
-    <div className="p-4 space-y-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Teams</h1>
+    <div style={{ padding: 16, display: "grid", gap: 16 }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600 }}>Teams</h1>
         <RoleGate required="admin">
-          <button
-            onClick={startCreate}
-            className="rounded-2xl px-4 py-2 shadow border text-sm hover:opacity-90"
-          >
-            ➕ Create Team
-          </button>
+          <button onClick={startCreate} style={btnStyle}>➕ New Team</button>
         </RoleGate>
       </header>
-
-      {/* Admin Create/Edit Drawer */}
       <RoleGate required="admin">
-        <details open={!!editing} className="bg-white/70 rounded-2xl shadow p-4">
-          <summary className="cursor-pointer select-none text-sm opacity-75">{editing ? "Edit Team" : "Create Team"}</summary>
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-3 grid gap-3 max-w-lg">
-            <input hidden {...register("id")} />
-            <label className="grid gap-1">
-              <span className="text-sm opacity-80">Name</span>
-              <input className="border rounded-xl px-3 py-2" placeholder="Engineering" {...register("name")} />
-              {errors.name && <span className="text-xs text-red-600">{errors.name.message}</span>}
-            </label>
-            <label className="grid gap-1">
-              <span className="text-sm opacity-80">Description</span>
-              <textarea className="border rounded-xl px-3 py-2" rows={3} placeholder="What this team does" {...register("description")} />
-              {errors.description && <span className="text-xs text-red-600">{errors.description.message}</span>}
-            </label>
-              <div className="flex gap-2">
+        {editing !== null && (
+          <div style={cardStyle}>
+            <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
+              {editing ? "Edit Team" : "Create Team"}
+            </div>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ display: "grid", gap: 12, maxWidth: 520 }}>
+              <input hidden {...register("id")} />
+              <label style={{ display: "grid", gap: 4 }}>
+                <span style={{ fontSize: 12, opacity: 0.75 }}>Name</span>
+                <input style={inputStyle} {...register("name")} />
+                {errors.name && <span style={errStyle}>{errors.name.message}</span>}
+              </label>
+
+              <label style={{ display: "grid", gap: 4 }}>
+                <span style={{ fontSize: 12, opacity: 0.75 }}>Description</span>
+                <textarea rows={3} style={inputStyle} {...register("description")} />
+              </label>
+
+              <div style={{ display: "flex", gap: 8 }}>
                 <button
                   type="submit"
-                  disabled={isSubmitting || createTeam.isPending || updateTeam.isPending}
-                  className="rounded-2xl px-4 py-2 shadow border text-sm"
+                  disabled={isSubmitting || createMut.isPending || updateMut.isPending}
+                  style={btnStyle}
                 >
                   {editing ? "Save changes" : "Create"}
                 </button>
-                {editing && (
-                  <button type="button" onClick={() => setEditing(null)} className="rounded-2xl px-4 py-2 text-sm">
-                    Cancel
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  style={{ ...btnStyle, opacity: 0.8 }}
+                >
+                  Cancel
+                </button>
               </div>
             </form>
-          </details>
-        </RoleGate>
-        
-        {/* My Teams */}
-        
-        <section>
-          <h2 className="text-lg font-medium mb-2">My Teams</h2>
-          {loadingMine ? (
-            <p className="opacity-60 text-sm">Loading…</p>
-          ) : errorMine ? (
-            <p className="text-red-600 text-sm">{String(errorMine)}</p>
-          ) : (myTeams?.length ? (
-            <ul className="grid gap-2">
-              {myTeams!.map((t : any) => (
-                <TeamRow key={t.id} team={t} onEdit={startEdit} onDelete={onDelete} isAdmin={!!profile?.is_admin} />
-              ))}
-            </ul>
-          ) : (
-            <p className="opacity-60 text-sm">You are not a member of any team yet.</p>
+          </div>
+        )}
+      </RoleGate>
+      {isLoading ? (
+        <p style={{ opacity: 0.6, fontSize: 14 }}>Loading…</p>
+      ) : error ? (
+        <p style={{ color: "crimson", fontSize: 14 }}>{String(error)}</p>
+      ) : (
+        <ul style={{ display: "grid", gap: 8 }}>
+          {(teams ?? []).map((t) => (
+            <li key={t.id} style={rowStyle}>
+              <div>
+                <div style={{ fontWeight: 600 }}>{t.name}</div>
+                {t.description && <div style={{ fontSize: 13, opacity: 0.7 }}>{t.description}</div>}
+              </div>
+              <RoleGate required="admin">
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button style={btnSmStyle} onClick={() => startEdit(t)}>✏️ Edit</button>
+                  <button style={btnSmStyle} onClick={() => deleteMut.mutate(t.id)}>🗑 Delete</button>
+                </div>
+              </RoleGate>
+            </li>
           ))}
-        </section>
+        </ul>
+      )}
 
-        {/* Other Teams */}
-        <section>
-          <h2 className="text-lg font-medium mb-2">Other Teams</h2>
-          {loadingAll ? (
-            <p className="opacity-60 text-sm">Loading…</p>
-          ) : errorAll ? (
-            <p className="text-red-600 text-sm">{String(errorAll)}</p>
-          ) : (otherTeams.length ? (
-            <ul className="grid gap-2">
-            {otherTeams.map((t : any) => (
-              <TeamRow key={t.id} team={t} onEdit={startEdit} onDelete={onDelete} isAdmin={!!profile?.is_admin} />
-            ))}
-          </ul>
-        ) : (
-          <p className="opacity-60 text-sm">No other teams found.</p>
-        ))}
-      </section>
+      {!profile?.is_admin && (
+        <div style={{ fontSize: 12, opacity: 0.6 }}>
+          (Admin-only actions are hidden.)
+        </div>
+      )}
     </div>
   );
 }
 
-function TeamRow({ team, onEdit, onDelete, isAdmin }: { team: Team; onEdit: (t: Team) => void; onDelete: (id: string) => void; isAdmin: boolean }) {
-  return (
-    <li className="border rounded-2xl p-3 flex items-center justify-between">
-      <div>
-        <div className="font-medium">{team.name}</div>
-        {team.description && <div className="text-sm opacity-70">{team.description}</div>}
-      </div>
-      {isAdmin && (
-        <div className="flex gap-2">
-          <button className="text-sm px-3 py-1 rounded-xl border" onClick={() => onEdit(team)}>
-            ✏️ Edit
-          </button>
-          <button className="text-sm px-3 py-1 rounded-xl border" onClick={() => onDelete(team.id)}>
-            🗑 Delete
-          </button>
-        </div>
-      )}
-    </li>
-  );
-}
+const btnStyle: React.CSSProperties = {
+  border: "1px solid #ddd",
+  borderRadius: 12,
+  padding: "8px 12px",
+  background: "#fff",
+  cursor: "pointer",
+};
+const btnSmStyle: React.CSSProperties = { ...btnStyle, padding: "6px 10px", fontSize: 13 };
+const cardStyle: React.CSSProperties = {
+  background: "rgba(255,255,255,0.9)",
+  borderRadius: 16,
+  padding: 12,
+  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+};
+const rowStyle: React.CSSProperties = {
+  border: "1px solid #eee",
+  borderRadius: 16,
+  padding: 12,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+};
+const inputStyle: React.CSSProperties = {
+  border: "1px solid #ddd",
+  borderRadius: 10,
+  padding: "8px 10px",
+};
+const errStyle: React.CSSProperties = { color: "crimson", fontSize: 12 };

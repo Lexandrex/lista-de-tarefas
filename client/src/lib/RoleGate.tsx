@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { useAuth } from "@/app/AuthProvider";
+import { useAuth } from "@/app/useAuth";
 
 export function RoleGate({ required, children }: { required: "admin" | "user"; children: ReactNode }) {
     const { profile } = useAuth();

@@ -1,7 +1,12 @@
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import {
+  createContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
-
 
 export type AuthValue = {
   session: Session | null;
@@ -10,31 +15,28 @@ export type AuthValue = {
   isLoading: boolean;
 };
 
-const AuthContext = createContext<AuthValue>({
+export const AuthContext = createContext<AuthValue>({
   session: null,
   user: null,
   profile: null,
   isLoading: true,
 });
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
+export default function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<{ org_id?: string | null; is_admin?: boolean } | null>(null);
 
   useEffect(() => {
     let active = true;
-
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       setSession(data.session ?? null);
     });
-
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       if (!active) return;
       setSession(s);
     });
-
     return () => {
       active = false;
       sub.subscription.unsubscribe();
@@ -54,12 +56,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         .select("org_id, is_admin")
         .eq("id", session.user.id)
         .maybeSingle();
+
       if (!active) return;
-      if (error) {
-        setProfile(null);
-      } else {
-        setProfile(data ?? null);
-      }
+      setProfile(error ? null : (data ?? null));
       setIsLoading(false);
     }
     setIsLoading(true);
@@ -78,9 +77,6 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     }),
     [session, profile, isLoading]
   );
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
 
-export function useAuth(): AuthValue {
-  return useContext(AuthContext);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
