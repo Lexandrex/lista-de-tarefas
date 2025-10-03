@@ -6,6 +6,8 @@ import ProjectsPage from "@/features/projects/Projects";
 import TasksPage from "@/features/tasks/Tasks";
 import TeamsPage from "@/features/teams/Teams";
 import AdminRoute from "@/lib/AdminRoute";
+import HomePage from "@/features/home/Home";
+import ProjectDetailsPage from "@/features/projects/ProjectDetails";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -17,7 +19,9 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
+      { index: true, element: <HomePage /> },
       { index: true, element: <ProjectsPage /> },
+      { path: "projects/:id", element: <ProjectDetailsPage /> },
       { path: "projects", element: <ProjectsPage /> },
       { path: "tasks", element: <TasksPage /> },
       {

@@ -1,118 +1,204 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { RoleGate } from "@/lib/RoleGate";
-import {
-  useProjects,
-  useCreateProject,
-  useUpdateProject,
-  useDeleteProject,
-  type Project,
-} from "./hooks/useProjects";
 
-const projectSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2, "Name too short"),
-  description: z.string().max(300).optional().nullable(),
-  team_id: z.string().optional().nullable(),
-});
-
-type ProjectForm = z.infer<typeof projectSchema>;
+type Project = { id: string; name: string; description?: string | null; team_id: string | null; members?: string[] };
+type Team   = { id: string; name: string; description?: string | null };
 
 export default function ProjectsPage() {
-  const { data: projects, isLoading, error } = useProjects();
-  const createMut = useCreateProject();
-  const updateMut = useUpdateProject();
-  const deleteMut = useDeleteProject();
-
+  const nav = useNavigate();
+  const currentUserId = "u1";
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Project | null>(null);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<ProjectForm>({ resolver: zodResolver(projectSchema) });
 
-  function startCreate() {
-    setEditing(null);
-    reset({ name: "", description: "", team_id: undefined });
+  useEffect(() => {
+    setProjects([
+      { id: "p1", name: "project1", description: "description", team_id: "t1", members: ["u1","u2"] },
+      { id: "p2", name: "proj2",        description: "desc",        team_id: "t2", members: ["u2"] },
+      { id: "p3", name: "proj3",     description: "desc",  team_id: null,  members: [] },
+    ]);
+  }, []);
+
+  const filtered = useMemo(() => projects.filter(p => p.name.toLowerCase().includes(q.toLowerCase())), [projects, q]);
+
+  const myProjects    = filtered.filter(p => p.members?.includes(currentUserId));
+  const otherProjects = filtered.filter(p => !p.members?.includes(currentUserId));
+
+  async function loadTeams(): Promise<Team[]> {
+    return [
+      { id: "t1", name: "team1" },
+      { id: "t2", name: "team2" },
+    ];
   }
 
-  function startEdit(p: Project) {
-    setEditing(p);
-    reset({ id: p.id, name: p.name, description: p.description ?? "", team_id: p.team_id ?? undefined });
-  }
-
-  async function onSubmit(values: ProjectForm) {
-    if (editing) {
-      await updateMut.mutateAsync({ id: editing.id, name: values.name, description: values.description ?? null, team_id: values.team_id ?? null });
+  async function upsertProject(v: { id?: string; name: string; description?: string | null; team_id: string | null }) {
+    if (editing?.id) {
+      setProjects(prev => prev.map(p => (p.id === editing.id ? { ...p, ...v, id: editing.id } : p)));
     } else {
-      await createMut.mutateAsync({ name: values.name, description: values.description ?? null, team_id: values.team_id ?? null });
+      setProjects(prev => [{ id: "p" + Math.random().toString(36).slice(2,8), members: [currentUserId], ...v }, ...prev]);
     }
     setEditing(null);
-    reset({ name: "", description: "", team_id: undefined });
+  }
+
+  async function deleteProject(id: string) {
+    setProjects(prev => prev.filter(p => p.id !== id));
   }
 
   return (
-    <div className="p-4 space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Projects</h1>
-        <RoleGate required="admin">
-          <button onClick={startCreate} className="rounded-2xl px-4 py-2 shadow border text-sm">➕ New Project</button>
-        </RoleGate>
-      </header>
-
-      {/* Admin Create/Edit */}
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 grid gap-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Projects</h1>
+        <div className="flex items-center gap-2">
+          <input
+            className="input w-72"
+            placeholder="Search projects"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <RoleGate required="admin">
+            <button
+              className="btn btn-primary"
+              onClick={() => setEditing({ name: "", description: "", team_id: null } as Project)}
+            >
+              + Create
+            </button>
+          </RoleGate>
+        </div>
+      </div>
+      <section className="grid gap-2">
+        <div className="text-sm text-muted">You’re affiliated to</div>
+        <div className="grid gap-3">
+          {myProjects.length === 0 ? (
+            <div className="card p-4 text-sm text-muted">You aren’t a member of any project yet.</div>
+          ) : (
+            myProjects.map(p => (
+              <ProjectRow
+                key={p.id}
+                p={p}
+                onView={() => nav(`/projects/${p.id}`)}
+                onEdit={() => setEditing(p)}
+                onDelete={() => deleteProject(p.id)}
+              />
+            ))
+          )}
+        </div>
+      </section>
+      <section className="grid gap-2">
+        <div className="text-sm text-muted">Other existing projects</div>
+        <div className="grid gap-3">
+          {otherProjects.length === 0 ? (
+            <div className="card p-4 text-sm text-muted">No other projects found.</div>
+          ) : (
+            otherProjects.map(p => (
+              <ProjectRow
+                key={p.id}
+                p={p}
+                onView={() => nav(`/projects/${p.id}`)}
+                onEdit={() => setEditing(p)}
+                onDelete={() => deleteProject(p.id)}
+              />
+            ))
+          )}
+        </div>
+      </section>
       <RoleGate required="admin">
-        {(editing !== null) && (
-          <div className="bg-white/70 rounded-2xl shadow p-4">
-            <div className="text-sm opacity-75 mb-2">{editing ? "Edit Project" : "Create Project"}</div>
-            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 max-w-lg">
-              <input hidden {...register("id")} />
-              <label className="grid gap-1">
-                <span className="text-sm opacity-80">Name</span>
-                <input className="border rounded-xl px-3 py-2" {...register("name")} />
-                {errors.name && <span className="text-xs text-red-600">{errors.name.message}</span>}
-              </label>
-              <label className="grid gap-1">
-                <span className="text-sm opacity-80">Description</span>
-                <textarea className="border rounded-xl px-3 py-2" rows={3} {...register("description")} />
-              </label>
-              <div className="flex gap-2">
-                <button type="submit" disabled={isSubmitting || createMut.isPending || updateMut.isPending} className="rounded-2xl px-4 py-2 shadow border text-sm">
-                  {editing ? "Save changes" : "Create"}
-                </button>
-                <button type="button" onClick={() => setEditing(null)} className="rounded-2xl px-4 py-2 text-sm">Cancel</button>
-              </div>
-            </form>
+        {editing && (
+          <div className="card p-4">
+            <div className="text-sm text-muted mb-2">{editing.id ? "Edit Project" : "Create Project"}</div>
+            <ProjectForm
+              initial={editing}
+              loadTeams={loadTeams}
+              submitLabel={editing.id ? "Save changes" : "Create"}
+              onSubmit={upsertProject}
+              onCancel={() => setEditing(null)}
+            />
           </div>
         )}
       </RoleGate>
-
-      {/* List */}
-      {isLoading ? (
-        <p className="opacity-60 text-sm">Loading…</p>
-      ) : error ? (
-        <p className="text-red-600 text-sm">{String(error)}</p>
-      ) : (
-        <ul className="grid gap-2">
-          {(projects ?? []).map((p) => (
-            <li key={p.id} className="border rounded-2xl p-3 flex items-center justify-between">
-              <div>
-                <div className="font-medium">{p.name}</div>
-                {p.description && <div className="text-sm opacity-70">{p.description}</div>}
-              </div>
-              <RoleGate required="admin">
-                <div className="flex gap-2">
-                  <button className="text-sm px-3 py-1 rounded-xl border" onClick={() => startEdit(p)}>✏️ Edit</button>
-                  <button className="text-sm px-3 py-1 rounded-xl border" onClick={() => deleteMut.mutate(p.id)}>🗑 Delete</button>
-                </div>
-              </RoleGate>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
+  );
+}
+
+function ProjectRow({ p, onView, onEdit, onDelete }: {
+  p: Project;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="card p-4 flex items-center justify-between">
+      <div>
+        <div className="font-semibold">{p.name}</div>
+        {p.description && <div className="text-sm text-muted">{p.description}</div>}
+      </div>
+      <div className="flex gap-2">
+        <button className="btn" onClick={onView}>View</button>
+        <RoleGate required="admin">
+          <button className="btn" onClick={onEdit}>Edit</button>
+          <button className="btn text-red-600" onClick={onDelete}>Delete</button>
+        </RoleGate>
+      </div>
+    </div>
+  );
+}
+
+function ProjectForm({
+  initial,
+  onSubmit,
+  onCancel,
+  submitLabel,
+  loadTeams,
+}: {
+  initial: { id?: string; name: string; description?: string | null; team_id: string | null };
+  onSubmit: (v: { id?: string; name: string; description?: string | null; team_id: string | null }) => Promise<void> | void;
+  onCancel: () => void;
+  submitLabel: string;
+  loadTeams: () => Promise<Team[]>;
+}) {
+  const [name, setName] = useState(initial.name ?? "");
+  const [description, setDescription] = useState(initial.description ?? "");
+  const [teamId, setTeamId] = useState<string | "">(initial.team_id ?? "");
+  const [teams, setTeams] = useState<Team[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    loadTeams().then(rows => active && setTeams(rows));
+    return () => { active = false; };
+  }, [loadTeams]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const payload = {
+      ...(initial?.id ? { id: initial.id } : {}),
+      name,
+      description: description || null,
+      team_id: (teamId as string) || null,
+    };
+    await onSubmit(payload);
+  }
+
+  return (
+    <form onSubmit={submit} className="grid gap-3 max-w-xl">
+      <label className="grid gap-1">
+        <span className="text-sm opacity-80">Name</span>
+        <input className="input" value={name} onChange={e => setName(e.target.value)} required />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-sm opacity-80">Description</span>
+        <textarea className="input" rows={3} value={description ?? ""} onChange={e => setDescription(e.target.value)} />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-sm opacity-80">Assign team</span>
+        <select className="select w-64" value={teamId} onChange={e => setTeamId(e.target.value)}>
+          <option value="">No team</option>
+          {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </label>
+      <div className="flex gap-2">
+        <button type="submit" className="btn btn-primary">{submitLabel}</button>
+        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+      </div>
+    </form>
   );
 }

@@ -1,175 +1,151 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useEffect, useMemo, useState } from "react";
 import { RoleGate } from "@/lib/RoleGate";
-import { useAuth } from "@/app/useAuth";
-import {
-  useTeams,
-  useCreateTeam,
-  useUpdateTeam,
-  useDeleteTeam,
-  type Team,
-} from "./hooks/useTeams";
 
-const teamSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2, "Name too short"),
-  description: z.string().max(300).optional().nullable(),
-});
-
-type TeamForm = z.infer<typeof teamSchema>;
+type Team = { id: string; name: string; description?: string | null };
 
 export default function TeamsPage() {
-  const { profile } = useAuth();
-  const { data: teams, isLoading, error } = useTeams();
-  const createMut = useCreateTeam();
-  const updateMut = useUpdateTeam();
-  const deleteMut = useDeleteTeam();
-
+  const [items, setItems] = useState<Team[]>([]);
   const [editing, setEditing] = useState<Team | null>(null);
+  const [q, setQ] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<TeamForm>({ resolver: zodResolver(teamSchema) });
+  useEffect(() => {
+    setItems([
+      { id: "t1", name: "Design", description: "UI/UX Guild" },
+      { id: "t2", name: "Engineering", description: "Web + Mobile" },
+    ]);
+  }, []);
 
-  function startCreate() {
-    setEditing(null);
-    reset({ name: "", description: "" });
-  }
+  const filtered = useMemo(
+    () => items.filter((t) => t.name.toLowerCase().includes(q.toLowerCase())),
+    [items, q]
+  );
 
-  function startEdit(t: Team) {
-    setEditing(t);
-    reset({
-      id: t.id,
-      name: t.name,
-      description: t.description ?? "",
-    });
-  }
-
-  const normalize = (v: TeamForm) => ({
-    name: v.name,
-    description: v.description ?? null,
-  });
-
-  async function onSubmit(values: TeamForm) {
+  async function handleSubmit(values: { id?: string; name: string; description?: string | null }) {
     if (editing) {
-      const { id: _drop, ...rest } = values;
-      await updateMut.mutateAsync({ id: editing.id, ...normalize(rest as TeamForm) });
+      setItems((prev) => prev.map((t) => (t.id === editing.id ? { ...t, ...values, id: editing.id } : t)));
     } else {
-      await createMut.mutateAsync(normalize(values) as any);
+      setItems((prev) => [{ id: "t" + Math.random().toString(36).slice(2, 8), ...values }, ...prev]);
     }
     setEditing(null);
-    reset({ name: "", description: "" });
+  }
+
+  async function handleDelete(id: string) {
+    setItems((prev) => prev.filter((t) => t.id !== id));
   }
 
   return (
-    <div style={{ padding: 16, display: "grid", gap: 16 }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600 }}>Teams</h1>
+    <div className="grid gap-4">
+      <header className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Teams</h1>
         <RoleGate required="admin">
-          <button onClick={startCreate} style={btnStyle}>➕ New Team</button>
+          <button
+            className="rounded-2xl px-4 py-2 border shadow bg-white"
+            onClick={() =>
+              setEditing({
+                id: "",
+                name: "",
+                description: "",
+              })
+            }
+          >
+            + New Team
+          </button>
         </RoleGate>
       </header>
-      <RoleGate required="admin">
-        {editing !== null && (
-          <div style={cardStyle}>
-            <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
-              {editing ? "Edit Team" : "Create Team"}
+
+      <div className="border rounded-2xl bg-white p-3">
+        <input
+          placeholder="Search teams"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="border rounded-xl px-3 py-2 w-64"
+        />
+      </div>
+
+      <div className="grid gap-3">
+        {filtered.map((t) => (
+          <div key={t.id} className="border rounded-2xl bg-white p-4 flex items-center justify-between">
+            <div>
+              <div className="font-semibold">{t.name}</div>
+              {t.description && <div className="text-sm opacity-70">{t.description}</div>}
             </div>
-            <form onSubmit={handleSubmit(onSubmit)} style={{ display: "grid", gap: 12, maxWidth: 520 }}>
-              <input hidden {...register("id")} />
-              <label style={{ display: "grid", gap: 4 }}>
-                <span style={{ fontSize: 12, opacity: 0.75 }}>Name</span>
-                <input style={inputStyle} {...register("name")} />
-                {errors.name && <span style={errStyle}>{errors.name.message}</span>}
-              </label>
-
-              <label style={{ display: "grid", gap: 4 }}>
-                <span style={{ fontSize: 12, opacity: 0.75 }}>Description</span>
-                <textarea rows={3} style={inputStyle} {...register("description")} />
-              </label>
-
-              <div style={{ display: "flex", gap: 8 }}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || createMut.isPending || updateMut.isPending}
-                  style={btnStyle}
-                >
-                  {editing ? "Save changes" : "Create"}
+            <RoleGate required="admin">
+              <div className="flex gap-2">
+                <button className="rounded-xl px-3 py-2 border" onClick={() => setEditing(t)}>
+                  Edit
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setEditing(null)}
-                  style={{ ...btnStyle, opacity: 0.8 }}
-                >
-                  Cancel
+                <button className="rounded-xl px-3 py-2 border text-red-600" onClick={() => handleDelete(t.id)}>
+                  Delete
                 </button>
               </div>
-            </form>
+            </RoleGate>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div className="border rounded-2xl bg-white p-4 text-sm opacity-70">No teams found.</div>
+        )}
+      </div>
+      {/*Admin Create/Edit*/}
+      <RoleGate required="admin">
+        {editing && (
+          <div className="bg-white rounded-2xl shadow p-4">
+            <div className="text-sm opacity-75 mb-2">{editing.id ? "Edit Team" : "Create Team"}</div>
+            <TeamForm
+              initial={editing}
+              onSubmit={handleSubmit}
+              onCancel={() => setEditing(null)}
+              submitLabel={editing.id ? "Save changes" : "Create"}
+            />
           </div>
         )}
       </RoleGate>
-      {isLoading ? (
-        <p style={{ opacity: 0.6, fontSize: 14 }}>Loading…</p>
-      ) : error ? (
-        <p style={{ color: "crimson", fontSize: 14 }}>{String(error)}</p>
-      ) : (
-        <ul style={{ display: "grid", gap: 8 }}>
-          {(teams ?? []).map((t) => (
-            <li key={t.id} style={rowStyle}>
-              <div>
-                <div style={{ fontWeight: 600 }}>{t.name}</div>
-                {t.description && <div style={{ fontSize: 13, opacity: 0.7 }}>{t.description}</div>}
-              </div>
-              <RoleGate required="admin">
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button style={btnSmStyle} onClick={() => startEdit(t)}>✏️ Edit</button>
-                  <button style={btnSmStyle} onClick={() => deleteMut.mutate(t.id)}>🗑 Delete</button>
-                </div>
-              </RoleGate>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {!profile?.is_admin && (
-        <div style={{ fontSize: 12, opacity: 0.6 }}>
-          (Admin-only actions are hidden.)
-        </div>
-      )}
     </div>
   );
 }
 
-const btnStyle: React.CSSProperties = {
-  border: "1px solid #ddd",
-  borderRadius: 12,
-  padding: "8px 12px",
-  background: "#fff",
-  cursor: "pointer",
-};
-const btnSmStyle: React.CSSProperties = { ...btnStyle, padding: "6px 10px", fontSize: 13 };
-const cardStyle: React.CSSProperties = {
-  background: "rgba(255,255,255,0.9)",
-  borderRadius: 16,
-  padding: 12,
-  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-};
-const rowStyle: React.CSSProperties = {
-  border: "1px solid #eee",
-  borderRadius: 16,
-  padding: 12,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-};
-const inputStyle: React.CSSProperties = {
-  border: "1px solid #ddd",
-  borderRadius: 10,
-  padding: "8px 10px",
-};
-const errStyle: React.CSSProperties = { color: "crimson", fontSize: 12 };
+function TeamForm({
+  initial,
+  onSubmit,
+  onCancel,
+  submitLabel,
+}: {
+  initial: { id?: string; name: string; description?: string | null };
+  onSubmit: (v: { id?: string; name: string; description?: string | null }) => Promise<void> | void;
+  onCancel: () => void;
+  submitLabel: string;
+}) {
+  const [name, setName] = useState(initial.name ?? "");
+  const [description, setDescription] = useState(initial.description ?? "");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const payload = {
+      ...(initial?.id ? { id: initial.id } : {}),
+      name,
+      description: description || null,
+    };
+
+    await onSubmit(payload as any);
+  }
+
+  return (
+    <form onSubmit={submit} className="grid gap-3 max-w-lg">
+      <label className="grid gap-1">
+        <span className="text-sm opacity-80">Name</span>
+        <input className="border rounded-xl px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} required />
+      </label>
+      <label className="grid gap-1">
+        <span className="text-sm opacity-80">Description</span>
+        <textarea className="border rounded-xl px-3 py-2" rows={3} value={description ?? ""} onChange={(e) => setDescription(e.target.value)} />
+      </label>
+      <div className="flex gap-2">
+        <button type="submit" className="rounded-2xl px-4 py-2 shadow border text-sm bg-black text-white">
+          {submitLabel}
+        </button>
+        <button type="button" onClick={onCancel} className="rounded-2xl px-4 py-2 text-sm">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}

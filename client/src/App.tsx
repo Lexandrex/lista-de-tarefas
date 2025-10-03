@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/app/AuthProvider";
+import { useAuth } from "@/app/useAuth";
 import { Link } from "react-router-dom";
 
 export default function App() {
