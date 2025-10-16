@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { useSession } from "@/app/AuthProvider";
+import { useAuth } from "@/app/useAuth";
 
 type Mode = "signin" | "signup";
 
@@ -89,12 +89,14 @@ export default function Login() {
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const session = useSession();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (session) navigate("/", { replace: true });
-  }, [session, navigate]);
+    if (!isLoading && user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, isLoading, navigate]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import RequireAuth from "@/lib/RequireAuth";
 import Layout from "./Layout";
 import Login from "@/features/auth/Login";
+import RequestReset from "@/features/auth/RequestReset";
 import ProjectsPage from "@/features/projects/Projects";
 import TasksPage from "@/features/tasks/Tasks";
 import TeamsPage from "@/features/teams/Teams";
@@ -11,6 +12,7 @@ import ProjectDetailsPage from "@/features/projects/ProjectDetails";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
+  { path: "/reset", element: <RequestReset /> },
   {
     path: "/",
     element: (
