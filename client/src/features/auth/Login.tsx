@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/app/useAuth";
 
@@ -69,9 +69,9 @@ export default function Login() {
         >
           {pending ? "Signing in…" : "Sign in"}
         </button>
-        {/* <div style={{ fontSize: 12 }}>
-          <Link to="/reset">Forgot password?</Link>
-        </div> */}
+        { <div style={{ fontSize: 12 }}>
+          <Link to="/RequestReset">Forgot password?</Link>
+        </div> }
       </form>
     </div>
   );
