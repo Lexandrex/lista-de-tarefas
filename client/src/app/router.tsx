@@ -13,6 +13,7 @@ import ProjectDetailsPage from "@/features/projects/ProjectDetails";
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/reset", element: <RequestReset /> },
+  { path: "/reset-password", element: <RequestReset /> },
   {
     path: "/",
     element: (
