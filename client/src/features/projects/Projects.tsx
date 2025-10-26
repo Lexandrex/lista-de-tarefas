@@ -1,49 +1,163 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RoleGate } from "@/lib/RoleGate";
+import { useAuth } from "@/app/useAuth";
+import { supabase } from "@/lib/supabase";
+import type { Database } from "@/lib/supabase/types";
 
-type Project = { id: string; name: string; description?: string | null; team_id: string | null; members?: string[] };
-type Team   = { id: string; name: string; description?: string | null };
+type DbProjectRow   = Database["api"]["Views"]["projects"]["Row"];
+type DbTeamRow      = Database["api"]["Views"]["teams"]["Row"];
+type DbTeamMember   = Database["api"]["Views"]["team_members"]["Row"];
+type Args = Database["api"]["Functions"]["project_upsert"]["Args"];
+
+type Project = { id: string; name: string; description?: string | null; team_id: string | null; org_id?: string | null };
+type Team    = { id: string; name: string; description?: string | null };
 
 export default function ProjectsPage() {
   const nav = useNavigate();
-  const currentUserId = "u1";
+  const { user } = useAuth();
+  const orgId  = (user as any)?.user_metadata?.org_id ?? null;
+  const userId = user?.id ?? null;
   const [projects, setProjects] = useState<Project[]>([]);
+  const [myTeamIds, setMyTeamIds] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Project | null>(null);
 
+  // nullable view row mapping
+  const toSafeProject = (p: DbProjectRow): Project | null => {
+    if (!p?.id || !p?.name) return null;
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description ?? null,
+      team_id: p.team_id ?? null,
+      org_id: p.org_id ?? null,
+    };
+  };
+
+  // load projects + my team memberships
   useEffect(() => {
-    setProjects([
-      { id: "p1", name: "project1", description: "description", team_id: "t1", members: ["u1","u2"] },
-      { id: "p2", name: "proj2",        description: "desc",        team_id: "t2", members: ["u2"] },
-      { id: "p3", name: "proj3",     description: "desc",  team_id: null,  members: [] },
-    ]);
-  }, []);
+    let active = true;
+    (async () => {
+      if (!orgId || !userId) {
+        setProjects([]);
+        setMyTeamIds(new Set());
+        return;
+      }
 
-  const filtered = useMemo(() => projects.filter(p => p.name.toLowerCase().includes(q.toLowerCase())), [projects, q]);
+      const [projRes, membRes] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("id, name, description, team_id, org_id")
+          .eq("org_id", orgId),
+        supabase
+          .from("team_members")
+          .select("team_id, user_id, org_id")
+          .eq("org_id", orgId)
+          .eq("user_id", userId),
+      ]);
 
-  const myProjects    = filtered.filter(p => p.members?.includes(currentUserId));
-  const otherProjects = filtered.filter(p => !p.members?.includes(currentUserId));
+      if (!active) return;
+      if (projRes.error) throw projRes.error;
+      if (membRes.error) throw membRes.error;
 
-  async function loadTeams(): Promise<Team[]> {
-    return [
-      { id: "t1", name: "team1" },
-      { id: "t2", name: "team2" },
-    ];
-  }
+      // const notNull = <T,>(x: T | null | undefined): x is T => x != null;
+      const projRows = (projRes.data ?? []) as DbProjectRow[];
+      const rows = projRows
+        .map(toSafeProject)
+        .filter((x): x is Project => x != null);
+      const mine = new Set<string>(
+        (membRes.data as DbTeamMember[] ?? []).map(m => m.team_id!).filter(Boolean) as string[]
+      );
+      setProjects(rows);
+      setMyTeamIds(mine);
+    })().catch((err) => {
+      console.error("[Projects] load error", err);
+      setProjects([]);
+      setMyTeamIds(new Set());
+    });
+    return () => { active = false; };
+  }, [orgId, userId]);
 
-  async function upsertProject(v: { id?: string; name: string; description?: string | null; team_id: string | null }) {
-    if (editing?.id) {
-      setProjects(prev => prev.map(p => (p.id === editing.id ? { ...p, ...v, id: editing.id } : p)));
+  const filtered = useMemo(
+    () => projects.filter(p => p.name.toLowerCase().includes(q.toLowerCase())),
+    [projects, q]
+  );
+  const myProjects = useMemo(
+    () => filtered.filter(p => !!p.team_id && myTeamIds.has(p.team_id)),
+    [filtered, myTeamIds]
+  );
+  const otherProjects = useMemo(
+    () => filtered.filter(p => !(p.team_id && myTeamIds.has(p.team_id))),
+    [filtered, myTeamIds]
+  );
+
+  // data helpers
+  const loadTeams = useCallback(async (): Promise<Team[]> => {
+    if (!orgId) return [];
+    const { data, error } = await supabase
+      .from("teams") // VIEW in api
+      .select("id, name, description, org_id")
+      .eq("org_id", orgId);
+    if (error) throw error;
+    return (data as DbTeamRow[] ?? [])
+      .map(t => {
+        if (!t?.id || !t?.name) return null;
+        return { id: t.id, name: t.name, description: t.description ?? null } as Team;
+      })
+      .filter((x): x is Team => x != null);
+  }, [orgId]);
+  
+  const upsertProject = useCallback(async (v: { id?: string; name: string; description?: string | null; team_id: string | null }) => {
+    if (!orgId) throw new Error("orgId is null");
+    const args = {
+      _org_id: orgId!,
+      _name: v.name,
+      ...(v.id ?        { _id: v.id } : {}),
+      ...(v.team_id ?   { _team_id: v.team_id } : {}),
+      ...(v.description ? { _description: v.description } : {}),
+    } satisfies Args;
+
+    const { data, error } = await supabase.rpc("project_upsert", args);
+    if (error) {
+      console.error("[Projects] project_upsert error", error);
+      throw error;
+    }
+
+    const row = toSafeProject(data as DbProjectRow);
+    if (!row) {
+      // RPC retorna expected status
+      if (v.id) {
+        setProjects(prev => prev.map(p => (p.id === v.id ? { ...p, ...v } as Project : p)));
+      } else {
+        const newProj: Project = {
+          id: crypto.randomUUID(),
+          name: v.name,
+          description: v.description ?? null,
+          team_id: v.team_id ?? null,
+          org_id: orgId,
+        };
+        setProjects(prev => [newProj, ...prev]);
+      }
     } else {
-      setProjects(prev => [{ id: "p" + Math.random().toString(36).slice(2,8), members: [currentUserId], ...v }, ...prev]);
+      setProjects(prev => {
+        const exists = prev.some(p => p.id === row.id);
+        return exists ? prev.map(p => (p.id === row.id ? row : p)) : [row, ...prev];
+      });
     }
     setEditing(null);
-  }
+  }, [orgId]);
 
-  async function deleteProject(id: string) {
+  const deleteProject = useCallback(async (id: string) => {
+    const { error } = await supabase.rpc("project_delete", { _id: id });
+    if (error) {
+      console.error("[Projects] project_delete error", error);
+      throw error;
+    }
     setProjects(prev => prev.filter(p => p.id !== id));
-  }
+  }, []);
+
+  // ---------- render ----------
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 grid gap-4">
@@ -66,6 +180,7 @@ export default function ProjectsPage() {
           </RoleGate>
         </div>
       </div>
+
       <section className="grid gap-2">
         <div className="text-sm text-muted">You’re affiliated to</div>
         <div className="grid gap-3">
@@ -84,6 +199,7 @@ export default function ProjectsPage() {
           )}
         </div>
       </section>
+
       <section className="grid gap-2">
         <div className="text-sm text-muted">Other existing projects</div>
         <div className="grid gap-3">
@@ -102,6 +218,7 @@ export default function ProjectsPage() {
           )}
         </div>
       </section>
+
       <RoleGate required="admin">
         {editing && (
           <div className="card p-4">
@@ -163,7 +280,7 @@ function ProjectForm({
 
   useEffect(() => {
     let active = true;
-    loadTeams().then(rows => active && setTeams(rows));
+    loadTeams().then(rows => { if (active) setTeams(rows); }).catch(console.error);
     return () => { active = false; };
   }, [loadTeams]);
 

@@ -1,95 +1,106 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useOrgKey } from "@/lib/useOrgId";
+import type { PostgrestSingleResponse } from "@supabase/supabase-js";
 
 export type Project = {
   id: string;
-  name: string;
-  description?: string | null;
   org_id: string;
-  team_id?: string | null;
-  created_at?: string;
+  name: string;
+  description: string | null;
+  created_at: string;
 };
 
 const qk = {
-  all: (orgId: string | null) => ["projects", "all", orgId ?? "none"] as const,
-  byId: (orgId: string | null, id: string | null) => ["projects", "one", orgId ?? "none", id ?? "unknown"] as const,
+  all: (orgId: string | null) => ["projects", orgId] as const,
+  byId: (orgId: string | null, id: string | null) => ["projects", orgId, id] as const,
 };
 
-export function useProjects() {
-  const orgId = useOrgKey();
+export function useProjects(orgId: string | null) {
   return useQuery({
     queryKey: qk.all(orgId),
-    enabled: orgId !== null,
+    enabled: !!orgId,
+    queryFn: async () => {
+      const q = supabase
+        .from("projects")
+        .select("id, org_id, name, description, created_at")
+        .eq("org_id", orgId!);
+
+      const { data, error } = (await q) as PostgrestSingleResponse<Project[]>;
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useProject(orgId: string | null, projectId: string | null) {
+  const enabled = !!orgId && !!projectId;
+  return useQuery({
+    queryKey: qk.byId(orgId, projectId),
+    enabled,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
-        .select("id, name, description, org_id, team_id, created_at")
-        .eq("org_id", orgId)
-        .order("created_at", { ascending: false });
+        .select("id, org_id, name, description, created_at")
+        .eq("org_id", orgId!)
+        .eq("id", projectId!)
+        .maybeSingle();
+
       if (error) throw error;
-      return (data ?? []) as Project[];
+      return data as Project | null;
     },
   });
 }
 
-export function useCreateProject() {
+export function useCreateProject(orgId: string | null) {
   const qc = useQueryClient();
-  const orgId = useOrgKey();
   return useMutation({
-    mutationFn: async (input: { name: string; description?: string | null; team_id?: string | null }) => {
-      if (!orgId) throw new Error("Missing org_id");
+    mutationFn: async (v: { name: string; description?: string | null }) => {
+      if (!orgId) throw new Error("orgId required");
       const { data, error } = await supabase
         .from("projects")
-        .insert({ ...input, org_id: orgId })
-        .select("id, name, description, org_id, team_id, created_at")
-        .single();
+        .insert({ org_id: orgId, name: v.name, description: v.description ?? null })
+        .select("id, org_id, name, description, created_at")
+        .maybeSingle();
       if (error) throw error;
       return data as Project;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["projects"] });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.all(orgId) }),
   });
 }
 
-export function useUpdateProject() {
+export function useUpdateProject(orgId: string | null) {
   const qc = useQueryClient();
-  const orgId = useOrgKey();
   return useMutation({
-    mutationFn: async (input: { id: string; name?: string; description?: string | null; team_id?: string | null }) => {
-      const { id, ...patch } = input;
+    mutationFn: async (v: { id: string; name?: string; description?: string | null }) => {
+      if (!orgId) throw new Error("orgId required");
       const { data, error } = await supabase
         .from("projects")
-        .update(patch)
-        .eq("id", id)
+        .update({
+          ...(v.name !== undefined ? { name: v.name } : {}),
+          ...(v.description !== undefined ? { description: v.description } : {}),
+        })
         .eq("org_id", orgId)
-        .select("id, name, description, org_id, team_id, created_at")
-        .single();
+        .eq("id", v.id)
+        .select("id, org_id, name, description, created_at")
+        .maybeSingle();
       if (error) throw error;
       return data as Project;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["projects"] });
+    onSuccess: (_, v) => {
+      qc.invalidateQueries({ queryKey: qk.all(orgId) });
+      qc.invalidateQueries({ queryKey: qk.byId(orgId, v.id) });
     },
   });
 }
 
-export function useDeleteProject() {
+export function useDeleteProject(orgId: string | null) {
   const qc = useQueryClient();
-  const orgId = useOrgKey();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", id)
-        .eq("org_id", orgId);
+      if (!orgId) throw new Error("orgId required");
+      const { error } = await supabase.from("projects").delete().eq("org_id", orgId).eq("id", id);
       if (error) throw error;
-      return id;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["projects"] });
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.all(orgId) }),
   });
 }
