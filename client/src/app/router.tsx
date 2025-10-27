@@ -8,9 +8,16 @@ import TeamsPage from "@/features/teams/Teams";
 import AdminRoute from "@/lib/AdminRoute";
 import HomePage from "@/features/home/Home";
 import ProjectDetailsPage from "@/features/projects/ProjectDetails";
+import Signup from "@/features/auth/Signup";
+import RequestReset from "@/features/auth/RequestReset";
+import ResetPassword from "@/features/auth/ResetPassword";
+
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
+  { path: "/signup", element: <Signup /> },
+  { path: "/reset", element: <RequestReset /> },
+  { path: "/auth/reset", element: <ResetPassword /> },
   {
     path: "/",
     element: (

@@ -3,6 +3,18 @@ import type {
   PostgrestResponse,
   PostgrestSingleResponse,
 } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
+
+type TeamRow = Database["api"]["Views"]["teams"]["Row"];
+
+export async function selectTeamsByOrg(org: string) {
+  const { data, error } = await supabase
+    .from("teams")
+    .select("id, org_id, name, description, created_at, updated_at")
+    .eq("org_id", org);
+  if (error) throw error;
+  return data as TeamRow[];
+}
 
 export async function orgSelectMany<T = any>(
   table: string,

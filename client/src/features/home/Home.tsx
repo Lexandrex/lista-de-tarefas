@@ -1,28 +1,25 @@
+// Home.tsx
 import { useState } from "react";
 import Calendar from "react-calendar";
-// import "react-calendar/dist/Calendar.css";
 import { useAuth } from "@/app/useAuth";
+import { useAgenda } from "./hooks/useAgenda";
 
 type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 export default function HomePage() {
   const { user } = useAuth();
+  const orgId = (user as any)?.user_metadata?.org_id ?? null;
   const [value, setValue] = useState<Value>(new Date());
   const selectedDate =
-  value instanceof Date ? value : (value?.[0] as Date | null) ?? new Date();
+    value instanceof Date ? value : (value?.[0] as Date | null) ?? new Date();
   const isToday = isSameDay(selectedDate, new Date());
-
-  const agenda = isToday
-    ? [
-        { time: "09:00", title: "meeting" },
-        { time: "13:00", title: "lunch" },
-        { time: "16:00", title: "zoom call" },
-      ]
-    : [
-        { time: "10:00", title: "other days to-dos" },
-        { time: "15:30", title: "to-dos" },
-      ];
+  const {
+    data: agenda = [],
+    isLoading,
+    isError,
+    error,
+  } = useAgenda(orgId, selectedDate);
 
   return (
     <div style={{ padding: 24, display: "grid", gap: 24 }}>
@@ -46,13 +43,21 @@ export default function HomePage() {
           <div style={{ fontWeight: 600, marginBottom: 8 }}>
             {isToday ? "Today's Agenda" : formatDate(selectedDate)}
           </div>
-          {agenda.length === 0 ? (
+          {isLoading && <div style={{ fontSize: 13, opacity: 0.7 }}>Loading…</div>}
+          {isError && (
+            <div style={{ fontSize: 13, color: "#b91c1c" }}>
+              {(error as any)?.message ?? "Failed to load agenda."}
+            </div>
+          )}
+          {!isLoading && !isError && agenda.length === 0 && (
             <div style={{ fontSize: 13, opacity: 0.7 }}>No items.</div>
-          ) : (
+          )}
+
+          {!isLoading && !isError && agenda.length > 0 && (
             <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 8 }}>
-              {agenda.map((a, i) => (
+              {agenda.map((a : any) => (
                 <li
-                  key={i}
+                  key={`${a.kind}-${a.id}`}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
@@ -63,7 +68,7 @@ export default function HomePage() {
                     background: "#fff",
                   }}
                 >
-                  <span style={{ fontSize: 13, opacity: 0.8 }}>{a.time}</span>
+                  <span style={{ fontSize: 13, opacity: 0.8 }}>{a.label}</span>
                   <span style={{ fontWeight: 500 }}>{a.title}</span>
                 </li>
               ))}
@@ -72,10 +77,7 @@ export default function HomePage() {
         </Card>
         <Card>
           <div style={{ fontWeight: 600, marginBottom: 8 }}>Calendar</div>
-          <Calendar
-            onChange={setValue}
-            value={value}
-          />
+          <Calendar onChange={setValue} value={value} />
         </Card>
       </div>
     </div>
@@ -127,5 +129,10 @@ function isSameDay(a: Date | null, b: Date | null) {
 
 function formatDate(d: Date | null) {
   if (!d) return "";
-  return d.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+  return d.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }

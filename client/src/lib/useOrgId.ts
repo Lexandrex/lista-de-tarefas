@@ -10,26 +10,34 @@ export function useOrgId() {
 
   useEffect(() => {
     let active = true;
-    async function run() {
-      if (authLoading || !user?.id) {
-        setLoading(false);
-        setOrgId(null);
-        return;
-      }
+
+    // authloading = 1 user logado
+    if (authLoading) return;
+
+    // if logged out clear and stop
+    if (!user?.id) {
+      setOrgId(null);
+      setErr(null);
+      setLoading(false);
+      return;
+    }
+
+    // when logged in fetch org_id
+    (async () => {
       const { data, error } = await supabase
         .from("profiles")
         .select("org_id")
         .eq("id", user.id)
         .maybeSingle();
+
       if (!active) return;
+
       if (error) setErr(error.message);
       setOrgId(data?.org_id ?? null);
       setLoading(false);
-    }
-    run();
-    return () => {
-      active = false;
-    };
+    })();
+
+    return () => { active = false; };
   }, [user?.id, authLoading]);
   return { orgId, loading, err };
 }

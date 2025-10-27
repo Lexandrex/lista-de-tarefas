@@ -1,78 +1,75 @@
 import { useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/app/useAuth";
 
 export default function Login() {
-  const { user, isLoading } = useAuth();
-  const loc = useLocation();
+  const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!isLoading && user) {
-    const from = (loc.state as any)?.from?.pathname ?? "/";
-    return <Navigate to={from} replace />;
-  }
-
-  async function signIn(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setPending(true);
-    setErr(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setErr(error.message);
-    setPending(false);
+    setSubmitting(true);
+    setError(null);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    setSubmitting(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    if (data.session) nav("/");
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 16 }}>
-      <form onSubmit={signIn} style={{ width: 340, display: "grid", gap: 10 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700 }}>Login</h1>
+    <div className="min-h-[100dvh] grid place-items-center bg-gray-50 p-6">
+      <div className="w-full max-w-sm rounded-xl border bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold mb-4">Log in</h1>
+        <form onSubmit={onSubmit} className="space-y-3">
+          <label className="block">
+            <span className="text-sm">Email</span>
+            <input
+              className="mt-1 w-full rounded border p-2"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm">Password</span>
+            <input
+              className="mt-1 w-full rounded border p-2"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
 
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-            style={{ border: "1px solid #ddd", padding: 10, borderRadius: 10 }}
-          />
-        </label>
+          {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <label style={{ display: "grid", gap: 6 }}>
-          <span style={{ fontSize: 12, opacity: 0.8 }}>Password</span>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-            style={{ border: "1px solid #ddd", padding: 10, borderRadius: 10 }}
-          />
-        </label>
+          <button
+            type="submit"
+            className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+            disabled={submitting}
+          >
+            {submitting ? "Signing in…" : "Log in"}
+          </button>
+        </form>
 
-        {err && <div style={{ color: "crimson", fontSize: 12 }}>{err}</div>}
-
-        <button
-          type="submit"
-          disabled={pending}
-          style={{
-            padding: "10px 12px",
-            borderRadius: 10,
-            border: "1px solid #ddd",
-            background: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          {pending ? "Signing in…" : "Sign in"}
-        </button>
-        {/* <div style={{ fontSize: 12 }}>
-          <Link to="/reset">Forgot password?</Link>
-        </div> */}
-      </form>
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <Link to="/reset" className="text-blue-600 hover:underline">
+            Forgot password?
+          </Link>
+          <Link to="/signup" className="text-blue-600 hover:underline">
+            Don’t have an account?
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

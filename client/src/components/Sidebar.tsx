@@ -5,6 +5,7 @@ const HEADER_H = 64;
 const SIDEBAR_W = 240;
 
 export default function Sidebar() {
+  
   return (
     <aside
       style={{
@@ -27,7 +28,6 @@ export default function Sidebar() {
         <RoleGate required="admin">
           <NavItem to="/teams" label="Teams" />
         </RoleGate>
-
         <NavItem to="/projects" label="Projects" />
         <NavItem to="/tasks" label="Tasks" />
         {

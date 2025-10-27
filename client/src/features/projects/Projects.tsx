@@ -35,7 +35,7 @@ export default function ProjectsPage() {
     };
   };
 
-  // load projects + my team memberships
+  // load projects + team memberships
   useEffect(() => {
     let active = true;
     (async () => {

@@ -15,6 +15,11 @@ export type AuthValue = {
   isLoading: boolean;
 };
 
+type AuthProfile = {
+  org_id: string | null;
+  is_admin: boolean;
+};
+
 export const AuthContext = createContext<AuthValue>({
   session: null,
   user: null,
@@ -45,6 +50,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+
     async function loadProfile() {
       if (!session?.user?.id) {
         setProfile(null);
@@ -56,13 +62,20 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         .select("org_id, is_admin")
         .eq("id", session.user.id)
         .maybeSingle();
-
       if (!active) return;
-      setProfile(error ? null : (data ?? null));
+      const next: AuthProfile | null =
+        error || !data
+          ? null
+          : {
+              org_id: data.org_id ?? null,
+              is_admin: !!data.is_admin,
+            };
+      setProfile(next);
       setIsLoading(false);
     }
     setIsLoading(true);
     loadProfile();
+
     return () => {
       active = false;
     };

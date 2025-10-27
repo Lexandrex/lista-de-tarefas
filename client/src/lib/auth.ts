@@ -2,7 +2,15 @@ import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/lib/supabase";
 
-export type Role = 'admin' | 'manager' | 'member';
+export type Role = "admin" | "member";
+
+type DbProfile = {
+  id: string;
+  org_id: string | null;
+  full_name: string | null;
+  email: string | null;
+  is_admin: boolean;
+};
 
 export type Profile = {
   id: string;
@@ -37,20 +45,30 @@ export function useAuthListener() {
 
 export function useProfile() {
   return useQuery({
-    queryKey: ['profile'],
+    queryKey: ["profile"],
     queryFn: async (): Promise<Profile | null> => {
-      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userErr,
+      } = await supabase.auth.getUser();
       if (userErr) throw userErr;
       if (!user) return null;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, org_id, full_name, email, role')
-        .eq('id', user.id)
+      const sbPublic = (supabase as any).schema("public");
+      const { data, error } = await sbPublic
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
-
       if (error) throw error;
-      return data as Profile;
+
+      const row = data as DbProfile;
+      return {
+        id: row.id,
+        org_id: row.org_id,
+        full_name: row.full_name,
+        email: row.email,
+        role: row.is_admin ? "admin" : "member",
+      };
     },
     staleTime: 60_000,
   });

@@ -1,19 +1,92 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function ResetPassword() {
-  const [pw,setPw] = useState(""); const [ok,setOk] = useState("");
-  useEffect(()=>{ supabase.auth.onAuthStateChange(async (e, s)=>{
-    if (e === "PASSWORD_RECOVERY" && s) {/* aqui ja ta atuh pra reset de sneha*/}
-  }); }, []);
+  const nav = useNavigate();
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm]   = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo]   = useState<string | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        setInfo("Open this page from the reset password link we emailed you.");
+      }
+    });
+  }, []);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setSubmitting(true);
+    const { data, error } = await supabase.auth.updateUser({ password });
+    setSubmitting(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    if (data.user) {
+      setInfo("Password updated. You can now log in.");
+      setTimeout(() => nav("/login"), 800);
+    }
+  }
+
   return (
-    <form onSubmit={async e=>{e.preventDefault();
-      const { error } = await supabase.auth.updateUser({ password: pw });
-      setOk(error ? error.message : "Senha updated");
-    }}>
-      <input type="password" placeholder="new password" value={pw} onChange={e=>setPw(e.target.value)} />
-      <button>Update</button>
-      {ok && <p>{ok}</p>}
-    </form>
+    <div className="min-h-[100dvh] grid place-items-center bg-gray-50 p-6">
+      <div className="w-full max-w-sm rounded-xl border bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold mb-4">Set a new password</h1>
+        <form onSubmit={onSubmit} className="space-y-3">
+          <label className="block">
+            <span className="text-sm">New password</span>
+            <input
+              className="mt-1 w-full rounded border p-2"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm">Confirm password</span>
+            <input
+              className="mt-1 w-full rounded border p-2"
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              minLength={6}
+              required
+            />
+          </label>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {info  && <p className="text-sm text-green-700">{info}</p>}
+
+          <button
+            type="submit"
+            className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+            disabled={submitting}
+          >
+            {submitting ? "Saving…" : "Save new password"}
+          </button>
+        </form>
+
+        <div className="mt-4 text-sm">
+          <Link to="/login" className="text-blue-600 hover:underline">Back to login</Link>
+        </div>
+    </div>
+  </div>
   );
 }
