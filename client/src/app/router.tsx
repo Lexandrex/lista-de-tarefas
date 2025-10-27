@@ -3,7 +3,9 @@ import RequireAuth from "@/lib/RequireAuth";
 import Layout from "./Layout";
 import Login from "@/features/auth/Login";
 import RequestReset from "@/features/auth/RequestReset";
+import ResetPassword from "@/features/auth/ResetPassword";
 import ProjectsPage from "@/features/projects/Projects";
+import UsersPage from "@/features/users/Users";
 import TasksPage from "@/features/tasks/Tasks";
 import TeamsPage from "@/features/teams/Teams";
 import AdminRoute from "@/lib/AdminRoute";
@@ -13,7 +15,7 @@ import ProjectDetailsPage from "@/features/projects/ProjectDetails";
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/reset", element: <RequestReset /> },
-  { path: "/reset-password", element: <RequestReset /> },
+  { path: "/reset-password", element: <ResetPassword /> },
   {
     path: "/",
     element: (
@@ -22,10 +24,10 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <HomePage /> },
-      { index: true, element: <ProjectsPage /> },
+  { index: true, element: <HomePage /> },
       { path: "projects/:id", element: <ProjectDetailsPage /> },
       { path: "projects", element: <ProjectsPage /> },
+  { path: "users", element: <UsersPage /> },
       { path: "tasks", element: <TasksPage /> },
       {
         path: "teams",
