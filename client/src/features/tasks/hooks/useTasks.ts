@@ -164,6 +164,11 @@ export function useCreateTask(orgId: string | null) {
       assignee_id?: string | null;
     }): Promise<Task> => {
       if (!orgId) throw new Error("orgId required");
+      // NOTE: Historically this used the RPC `task_upsert`, but after a merge
+      // the DB had multiple overloaded versions of the function and PostgREST
+      // could not unambiguously choose one (PGRST203). A fix was applied in
+      // branch `fix/tasks-projects` (commit c94a0ca) to use direct table
+      // operations instead of the RPC. This comment documents that reason.
       const args = {
         _org_id: orgId as string,
         _project_id: v.project_id,

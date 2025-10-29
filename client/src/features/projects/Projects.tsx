@@ -140,6 +140,12 @@ export default function ProjectsPage() {
   
   const upsertProject = useCallback(async (v: { id?: string; name: string; description?: string | null; team_id: string | null }) => {
     if (!orgId) throw new Error("orgId is null");
+    // NOTE: This code previously called an overloaded RPC `project_upsert` which
+    // caused PostgREST ambiguity errors (PGRST203) in some environments after a
+    // merge. I created a fix branch `fix/tasks-projects` (commit c94a0ca) that
+    // replaces the RPC usage with direct .insert()/.update() calls against the
+    // `projects` table to avoid ambiguous overload resolution. Keep this note to
+    // explain that change and where to find the fix if you prefer direct RPCs.
     const args = {
       _org_id: orgId!,
       _name: v.name,

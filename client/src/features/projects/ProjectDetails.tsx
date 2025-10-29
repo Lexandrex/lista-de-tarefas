@@ -116,6 +116,11 @@ export default function ProjectDetailsPage() {
 
   const saveProject = useCallback(async (v: { id?: string; name: string; description?: string | null; team_id: string | null }) => {
     if (!orgId) throw new Error("orgId is null");
+    // NOTE: Previously this called RPC `project_upsert` which could be ambiguous
+    // due to multiple overloaded function signatures in the DB (PGRST203).
+    // A fix was implemented in branch `fix/tasks-projects` (commit c94a0ca)
+    // that replaces RPC calls with direct table insert/update to avoid
+    // ambiguous overload resolution. This comment documents that change.
     const args = {
       _org_id: orgId!,
       _name: v.name,
@@ -123,7 +128,6 @@ export default function ProjectDetailsPage() {
       ...(v.team_id  ? { _team_id: v.team_id } : {}),
       ...(v.description ? { _description: v.description } : {}),
     } satisfies Database["api"]["Functions"]["project_upsert"]["Args"];
-
     const { data, error } = await supabase.rpc("project_upsert", args);
     if (error) throw error;
 
@@ -148,6 +152,10 @@ export default function ProjectDetailsPage() {
     }) => {
     if (!orgId || !project) throw new Error("Missing org or project");
 
+    // NOTE: The task upsert previously used the `task_upsert` RPC which led to
+    // PostgREST ambiguity in some cases. The `fix/tasks-projects` branch (c94a0ca)
+    // contains changes switching these operations to direct table queries to
+    // avoid PGRST203. This comment explains why that change was made.
     const args = {
       _org_id: orgId,
       _project_id: project.id,
