@@ -30,6 +30,7 @@ export default function Sidebar() {
         </RoleGate>
         <NavItem to="/projects" label="Projects" />
         <NavItem to="/tasks" label="Tasks" />
+        <NavItem to="/users" label="Users" />
         {
         //<NavItem to="/agenda" label="Agenda" />
         }

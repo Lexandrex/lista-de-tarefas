@@ -29,6 +29,7 @@ export default function App() {
             <Link to="/teams" style={cardLink}>Teams</Link>
             <Link to="/projects" style={cardLink}>Projects</Link>
             <Link to="/tasks" style={cardLink}>Tasks</Link>
+            <Link to="/users" style={cardLink}>Users</Link>
           </div>
         </div>
       </main>

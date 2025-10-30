@@ -11,6 +11,7 @@ import ProjectDetailsPage from "@/features/projects/ProjectDetails";
 import Signup from "@/features/auth/Signup";
 import RequestReset from "@/features/auth/RequestReset";
 import ResetPassword from "@/features/auth/ResetPassword";
+import UsersPage from "@/features/users/Users";
 
 
 export const router = createBrowserRouter([
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: "projects/:id", element: <ProjectDetailsPage /> },
       { path: "projects", element: <ProjectsPage /> },
       { path: "tasks", element: <TasksPage /> },
+      { path: "users", element: <UsersPage /> },
       {
         path: "teams",
         element: (
