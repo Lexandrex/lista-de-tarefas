@@ -133,20 +133,20 @@ export default function TeamsPage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 grid gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Teams</h1>
+        <h1 className="text-xl font-semibold">Equipes</h1>
         <div className="flex items-center gap-2">
           <input
             className="input w-72"
-            placeholder="Search teams"
+            placeholder="Procurar por equipes"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
           <RoleGate required="admin">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary text-sm"
               onClick={() => setEditing({ name: "", description: "" } as Team)}
             >
-              + Create
+              +Criar
             </button>
           </RoleGate>
         </div>
@@ -154,7 +154,7 @@ export default function TeamsPage() {
 
       <section className="grid gap-3">
         {filtered.length === 0 ? (
-          <div className="card p-4 text-sm text-muted">No teams found.</div>
+          <div className="card p-4 text-sm text-muted">Nenhuma equipe encontrada.</div>
         ) : (
           filtered.map((t) => (
             <div key={t.id} className="card p-4 flex items-center justify-between">
@@ -164,8 +164,8 @@ export default function TeamsPage() {
               </div>
               <RoleGate required="admin">
                 <div className="flex gap-2">
-                  <button className="btn" onClick={() => setEditing(t)}>Edit</button>
-                  <button className="btn text-red-600" onClick={() => deleteTeam(t.id)}>Delete</button>
+                  <button className="btn" onClick={() => setEditing(t)}>Editar</button>
+                  
                 </div>
               </RoleGate>
             </div>
@@ -176,7 +176,7 @@ export default function TeamsPage() {
       <RoleGate required="admin">
         {editing && (
           <div className="card p-4">
-            <div className="text-sm text-muted mb-2">{editing.id ? "Edit Team" : "Create Team"}</div>
+            <div className="text-sm text-muted mb-2">{editing.id ? "Editar equipe" : "Criar equipe"}</div>
             <TeamFormCard
               initial={{
                 ...(editing.id ? { id: editing.id } : {}),
@@ -185,10 +185,18 @@ export default function TeamsPage() {
               }}
               meId={userId}
               loadOrgUsers={loadOrgUsers}
-              submitLabel={editing.id ? "Save changes" : "Create"}
+              submitLabel={editing.id ? "Salvar mudanças" : "Criar"}
               onSubmit={upsertTeam}
               onCancel={() => setEditing(null)}
             />
+            {editing?.id && (
+              <div className="mt-2">
+                <button type="button" className="btn text-red-600"
+                  onClick={async () => { await deleteTeam(editing.id as string); setEditing(null); }}>
+                  Deletar equipe
+                </button>
+              </div>
+            )}
           </div>
         )}
       </RoleGate>

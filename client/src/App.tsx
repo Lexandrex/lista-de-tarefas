@@ -14,21 +14,18 @@ export default function App() {
             <button onClick={() => supabase.auth.signOut()}>Sign out</button>
           </div>
 
-          {/* Agenda */}
           <section style={card}>
             <h3 style={title}>Agenda</h3>
           </section>
 
-          {/* Calendário */}
           <section style={card}>
             <h3 style={title}>Calendário</h3>
           </section>
 
-          {/* links */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))", gap: 16 }}>
-            <Link to="/teams" style={cardLink}>Teams</Link>
-            <Link to="/projects" style={cardLink}>Projects</Link>
-            <Link to="/tasks" style={cardLink}>Tasks</Link>
+            <Link to="/teams" style={cardLink}>Equipes</Link>
+            <Link to="/projects" style={cardLink}>Projetos</Link>
+            <Link to="/tasks" style={cardLink}>Tarefas</Link>
           </div>
         </div>
       </main>

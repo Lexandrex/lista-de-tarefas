@@ -68,12 +68,12 @@ export default function TeamFormCard({
   return (
     <form onSubmit={submit} className="grid gap-3 max-w-xl">
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Name</span>
+        <span className="text-sm opacity-80">Nome</span>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
       </label>
 
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Description</span>
+        <span className="text-sm opacity-80">Descrição</span>
         <textarea
           className="input"
           rows={3}
@@ -83,7 +83,7 @@ export default function TeamFormCard({
       </label>
 
       <div className="grid gap-2">
-        <div className="text-sm opacity-80">Members</div>
+        <div className="text-sm opacity-80">Selecione membros para a equipe</div>
         {meId && (
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -91,12 +91,12 @@ export default function TeamFormCard({
               checked={includeMe}
               onChange={(e) => setIncludeMe(e.target.checked)}
             />
-            Add me to this team
+            Me adicionar
           </label>
         )}
         <div className="grid gap-1 max-h-56 overflow-auto border rounded-md p-2">
           {users.length === 0 ? (
-            <div className="text-sm opacity-70">No users found.</div>
+            <div className="text-sm opacity-70">Nenhum funcionario encontrado.</div>
           ) : (
             users.map((u) => (
               <label key={u.id} className="flex items-center gap-2 text-sm">
@@ -114,7 +114,7 @@ export default function TeamFormCard({
 
       <div className="flex gap-2">
         <button type="submit" className="btn btn-primary">{submitLabel}</button>
-        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn" onClick={onCancel}>Cancelar</button>
       </div>
     </form>
   );

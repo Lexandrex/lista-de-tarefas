@@ -27,6 +27,8 @@ export function TaskFormCard({
   loadTeams: () => Promise<LiteTeam[]>;
   loadMembersByTeam: (teamId: string) => Promise<LiteMember[]>;
 }) {
+  const isCreate = !initial?.id;
+
   const [title, setTitle] = useState(initial.title ?? "");
   const [description, setDescription] = useState(initial.description ?? "");
   const [status, setStatus] = useState<"todo" | "doing" | "done">(initial.status ?? "todo");
@@ -34,12 +36,11 @@ export function TaskFormCard({
   const [projectId, setProjectId] = useState<string | "">(initial.project_id ?? "");
   const [teamId, setTeamId] = useState<string | "">(initial.team_id ?? "");
   const [assigneeId, setAssigneeId] = useState<string | "">(initial.assignee_id ?? "");
-
   const [projects, setProjects] = useState<LiteProject[]>([]);
   const [teams, setTeams] = useState<LiteTeam[]>([]);
   const [members, setMembers] = useState<LiteMember[]>([]);
 
-  // Load listas
+  // load listas
   useEffect(() => {
     let live = true;
     (async () => {
@@ -87,23 +88,23 @@ export function TaskFormCard({
   return (
     <form onSubmit={submit} className="grid gap-3 max-w-xl">
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Title</span>
+        <span className="text-sm opacity-80">Titulo</span>
         <input className="input" value={title} onChange={e => setTitle(e.target.value)} required />
       </label>
 
       <div className="grid grid-cols-2 gap-3">
         <label className="grid gap-1">
-          <span className="text-sm opacity-80">Project</span>
+          <span className="text-sm opacity-80">Escolha um projeto</span>
           <select className="select" value={projectId} onChange={e => setProjectId(e.target.value)} required>
-            <option value="">Select project…</option>
+            <option value="">Selecione um projeto</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         </label>
 
         <label className="grid gap-1">
-          <span className="text-sm opacity-80">Team</span>
+          <span className="text-sm opacity-80">Equipe</span>
           <select className="select" value={teamId} onChange={e => setTeamId(e.target.value)}>
-            <option value="">No team</option>
+            <option value="">Nenhuma equipe selecionada</option>
             {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
         </label>
@@ -111,9 +112,9 @@ export function TaskFormCard({
 
       <div className="grid grid-cols-2 gap-3">
         <label className="grid gap-1">
-          <span className="text-sm opacity-80">Assignee</span>
+          <span className="text-sm opacity-80">Escolha um funcionario</span>
           <select className="select" value={assigneeId} onChange={e => setAssigneeId(e.target.value)}>
-            <option value="">Unassigned</option>
+            <option value="">Selecione um membro</option>
             {members.map(m => <option key={m.id} value={m.id}>{m.name ?? m.email ?? m.id}</option>)}
           </select>
         </label>
@@ -121,26 +122,25 @@ export function TaskFormCard({
         <label className="grid gap-1">
           <span className="text-sm opacity-80">Status</span>
           <select className="select" value={status} onChange={e => setStatus(e.target.value as any)}>
-            <option value="todo">todo</option>
-            <option value="doing">doing</option>
-            <option value="done">done</option>
+            <option value="todo">A fazer</option>
+            <option value="doing">Fazendo</option>
           </select>
         </label>
       </div>
 
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Due date</span>
+        <span className="text-sm opacity-80">Prazo de finalização</span>
         <input className="input w-44" type="date" value={due} onChange={e => setDue(e.target.value)} />
       </label>
 
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Description</span>
+        <span className="text-sm opacity-80">Descrição</span>
         <textarea className="input" rows={3} value={description ?? ""} onChange={e => setDescription(e.target.value)} />
       </label>
 
       <div className="flex gap-2">
         <button className="btn btn-primary" type="submit">{submitLabel}</button>
-        <button className="btn" type="button" onClick={onCancel}>Cancel</button>
+        <button className="btn" type="button" onClick={onCancel}>Cancelar</button>
       </div>
     </form>
   );

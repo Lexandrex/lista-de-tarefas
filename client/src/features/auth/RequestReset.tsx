@@ -23,13 +23,13 @@ export default function RequestReset() {
       setError(error.message);
       return;
     }
-    setInfo("If that email exists, we’ve sent a reset link.");
+    setInfo("Enviamos ao seu email um link de recuperacao de senha.");
   }
 
   return (
     <div className="min-h-[100dvh] grid place-items-center bg-gray-50 p-6">
       <div className="w-full max-w-sm rounded-xl border bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold mb-4">Reset password</h1>
+        <h1 className="text-2xl font-semibold mb-4">Recuperar senha</h1>
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block">
             <span className="text-sm">Email</span>
@@ -51,12 +51,12 @@ export default function RequestReset() {
             className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
             disabled={submitting}
           >
-            {submitting ? "Sending…" : "Send reset link"}
+            {submitting ? "Enviando..." : "enviar link"}
           </button>
         </form>
 
         <div className="mt-4 text-sm">
-          <Link to="/login" className="text-blue-600 hover:underline">Back to login</Link>
+          <Link to="/login" className="text-blue-600 hover:underline">Voltar ao login</Link>
         </div>
       </div>
     </div>

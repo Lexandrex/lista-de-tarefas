@@ -12,7 +12,7 @@ export default function ResetPassword() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (!data.session) {
-        setInfo("Open this page from the reset password link we emailed you.");
+        setInfo("Enviamos para o seu email um link de recuperacao de senha.");
       }
     });
   }, []);
@@ -23,7 +23,7 @@ export default function ResetPassword() {
     setInfo(null);
 
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError("Senhas diferentes.");
       return;
     }
 
@@ -36,7 +36,7 @@ export default function ResetPassword() {
       return;
     }
     if (data.user) {
-      setInfo("Password updated. You can now log in.");
+      setInfo("Senha atualizada. Voce agora pode logar normalmente.");
       setTimeout(() => nav("/login"), 800);
     }
   }
@@ -44,10 +44,10 @@ export default function ResetPassword() {
   return (
     <div className="min-h-[100dvh] grid place-items-center bg-gray-50 p-6">
       <div className="w-full max-w-sm rounded-xl border bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold mb-4">Set a new password</h1>
+        <h1 className="text-2xl font-semibold mb-4">Insira uma nova senha</h1>
         <form onSubmit={onSubmit} className="space-y-3">
           <label className="block">
-            <span className="text-sm">New password</span>
+            <span className="text-sm">Nova senha</span>
             <input
               className="mt-1 w-full rounded border p-2"
               type="password"
@@ -59,7 +59,7 @@ export default function ResetPassword() {
             />
           </label>
           <label className="block">
-            <span className="text-sm">Confirm password</span>
+            <span className="text-sm">Confirmar senha</span>
             <input
               className="mt-1 w-full rounded border p-2"
               type="password"
@@ -79,12 +79,12 @@ export default function ResetPassword() {
             className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
             disabled={submitting}
           >
-            {submitting ? "Saving…" : "Save new password"}
+            {submitting ? "Salvando..." : "Salvar nova senha"}
           </button>
         </form>
 
         <div className="mt-4 text-sm">
-          <Link to="/login" className="text-blue-600 hover:underline">Back to login</Link>
+          <Link to="/login" className="text-blue-600 hover:underline">Voltar ao login</Link>
         </div>
     </div>
   </div>

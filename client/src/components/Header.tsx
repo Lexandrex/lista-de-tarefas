@@ -16,14 +16,15 @@ export default function Header({
   onBellClick,
   onSettingsClick,
   onProfileClick,
-}: HeaderProps) {
+  }: HeaderProps) {
   const [q, setQ] = useState("");
 
+/*
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch?.(q.trim());
   };
-
+*/
   const iconBtn: React.CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -38,30 +39,12 @@ export default function Header({
 
   return (
     <header style={styles.wrap}>
-      {/* nome do app*/}
       <div style={styles.left}>
         <span style={styles.brand}>{appName}</span>
       </div>
 
-      {/* searchbar */}
-      <div style={styles.center}>
-        <form onSubmit={submit} style={styles.searchWrap}>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Pesquisar..."
-            aria-label="Pesquisar"
-            style={styles.input}
-          />
-          <button type="submit" style={styles.searchBtn}>Pesquisar</button>
-        </form>
+      <div></div>
 
-        <button type="button" onClick={onCreate} style={styles.createBtn}>
-          + Criar
-        </button>
-      </div>
-
-      {/* bell, settings, profile */}
       <div style={styles.right}>
         <button type="button" onClick={onBellClick} title="Notifications" style={iconBtn} aria-label="Notifications">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+
+  "fmt": { "lineWidth": 100 },
+  "lint": { "rules": { "tags": ["recommended"] } },
+
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.unstable", "dom"]
+  },
+  
+  "tasks": {
+    "serve:sms": "supabase functions serve sms-direct",
+    "deploy:sms": "supabase functions deploy sms-direct",
+    "dev": "deno run --allow-env --allow-net index.ts"
+  }
+}

@@ -39,7 +39,7 @@ export default function Login() {
             />
           </label>
           <label className="block">
-            <span className="text-sm">Password</span>
+            <span className="text-sm">Senha</span>
             <input
               className="mt-1 w-full rounded border p-2"
               type="password"
@@ -63,10 +63,10 @@ export default function Login() {
 
         <div className="mt-4 flex items-center justify-between text-sm">
           <Link to="/reset" className="text-blue-600 hover:underline">
-            Forgot password?
+            Esqueceu a senha?
           </Link>
           <Link to="/signup" className="text-blue-600 hover:underline">
-            Don’t have an account?
+            Ainda nao tem uma conta?
           </Link>
         </div>
       </div>

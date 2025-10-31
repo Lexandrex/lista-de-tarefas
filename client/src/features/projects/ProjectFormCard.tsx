@@ -12,7 +12,7 @@ export default function ProjectFormCard({
   initial,
   onSubmit,
   onCancel,
-  submitLabel = "Save",
+  submitLabel = "Salvar",
   loadTeams,
 }: {
   initial?: ProjectUpsert;
@@ -41,22 +41,22 @@ export default function ProjectFormCard({
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 12, maxWidth: 720 }}>
       <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontSize: 12, opacity: 0.8 }}>Project name</span>
+        <span style={{ fontSize: 12, opacity: 0.8 }}>Nome do projeto</span>
         <input value={name} onChange={(e) => setName(e.target.value)} required style={input} />
       </label>
       <label style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontSize: 12, opacity: 0.8 }}>Description</span>
+        <span style={{ fontSize: 12, opacity: 0.8 }}>Descrição</span>
         <textarea rows={3} value={description ?? ""} onChange={(e) => setDescription(e.target.value)} style={input} />
       </label>
 
       <div style={{ display: "grid", gap: 6 }}>
-        <span style={{ fontSize: 12, opacity: 0.8 }}>Assign team</span>
-        <TeamPicker value={teamId} onChange={setTeamId} loadTeams={loadTeams} placeholder="No team yet" />
+        <span style={{ fontSize: 12, opacity: 0.8 }}>Selecione as equipes desejadas</span>
+        <TeamPicker value={teamId} onChange={setTeamId} loadTeams={loadTeams} placeholder="Nenhuma equipe ainda" />
       </div>
 
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" disabled={pending} style={btnPrimary}>{submitLabel}</button>
-        {onCancel && <button type="button" onClick={onCancel} style={btn}>Cancel</button>}
+        {onCancel && <button type="button" onClick={onCancel} style={btn}>Cancelar</button>}
       </div>
     </form>
   );

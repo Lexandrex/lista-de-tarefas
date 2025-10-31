@@ -64,19 +64,58 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
           id: string | null
           is_admin: boolean | null
           org_id: string | null
+          phone_e164: string | null
+          updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string | null
           is_admin?: boolean | null
           org_id?: string | null
+          phone_e164?: string | null
+          updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string | null
           is_admin?: boolean | null
           org_id?: string | null
+          phone_e164?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      project_teams: {
+        Row: {
+          created_at: string | null
+          org_id: string | null
+          project_id: string | null
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          org_id?: string | null
+          project_id?: string | null
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          org_id?: string | null
+          project_id?: string | null
+          team_id?: string | null
         }
         Relationships: []
       }
@@ -137,6 +176,7 @@ export type Database = {
           project_id: string | null
           reporter_id: string | null
           status: "todo" | "in_progress" | "done" | null
+          status_since: string | null
           team_id: string | null
           title: string | null
           updated_at: string | null
@@ -155,6 +195,7 @@ export type Database = {
           project_id?: string | null
           reporter_id?: string | null
           status?: "todo" | "in_progress" | "done" | null
+          status_since?: string | null
           team_id?: string | null
           title?: string | null
           updated_at?: string | null
@@ -173,6 +214,7 @@ export type Database = {
           project_id?: string | null
           reporter_id?: string | null
           status?: "todo" | "in_progress" | "done" | null
+          status_since?: string | null
           team_id?: string | null
           title?: string | null
           updated_at?: string | null
@@ -263,6 +305,10 @@ export type Database = {
     }
     Functions: {
       project_delete: { Args: { _id: string }; Returns: undefined }
+      project_set_teams: {
+        Args: { _org_id: string; _project_id: string; _team_ids: string[] }
+        Returns: undefined
+      }
       project_upsert:
         | {
             Args: {
@@ -329,7 +375,7 @@ export type Database = {
           _id?: string
           _org_id: string
           _project_id: string
-          _status?: "todo" | "in_progress" | "done"
+          _status?: string
           _team_id?: string
           _title?: string
         }
@@ -347,6 +393,7 @@ export type Database = {
           project_id: string | null
           reporter_id: string | null
           status: "todo" | "in_progress" | "done" | null
+          status_since: string | null
           team_id: string | null
           title: string | null
           updated_at: string | null

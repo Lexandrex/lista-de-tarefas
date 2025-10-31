@@ -8,7 +8,8 @@ import type { Database } from "@/lib/supabase/types";
 type DbProjectRow   = Database["api"]["Views"]["projects"]["Row"];
 type DbTeamRow      = Database["api"]["Views"]["teams"]["Row"];
 type DbTeamMember   = Database["api"]["Views"]["team_members"]["Row"];
-type Args = Database["api"]["Functions"]["project_upsert"]["Args"];
+type UpsertArgs = Database["api"]["Functions"]["project_upsert"]["Args"];
+type SetTeamsArgs = Database["api"]["Functions"]["project_set_teams"]["Args"];
 
 type Project = { id: string; name: string; description?: string | null; team_id: string | null; org_id?: string | null };
 type Team    = { id: string; name: string; description?: string | null };
@@ -107,46 +108,88 @@ export default function ProjectsPage() {
       })
       .filter((x): x is Team => x != null);
   }, [orgId]);
-  
-  const upsertProject = useCallback(async (v: { id?: string; name: string; description?: string | null; team_id: string | null }) => {
+
+// load team ids currently linked to the project (for checkbox preselection in Edit)
+  const loadProjectTeamIds = useCallback(async (projectId: string): Promise<string[]> => {
+    if (!orgId) return [];
+    const { data, error } = await supabase
+      .from("project_teams")
+      .select("team_id")
+      .eq("org_id", orgId as string)
+      .eq("project_id", projectId);
+    if (error) throw error;
+    return ((data ?? []) as { team_id: string | null }[]).map(r => r.team_id).filter((x): x is string => !!x);
+  }, [orgId]);
+
+  // sync associations via RPC
+  const setProjectTeams = useCallback(async (projectId: string, teamIds: string[]) => {
     if (!orgId) throw new Error("orgId is null");
-    const args = {
-      _org_id: orgId!,
-      _name: v.name,
-      ...(v.id ?        { _id: v.id } : {}),
-      ...(v.team_id ?   { _team_id: v.team_id } : {}),
-      ...(v.description ? { _description: v.description } : {}),
-    } satisfies Args;
+    const args: SetTeamsArgs = {
+      _org_id: orgId as string,
+      _project_id: projectId,
+      _team_ids: teamIds as any,
+    };
+    const { error } = await supabase.rpc("project_set_teams", args);
+    if (error) throw error;
+  }, [orgId]);
 
-    const { data, error } = await supabase.rpc("project_upsert", args);
-    if (error) {
-      console.error("[Projects] project_upsert error", error);
-      throw error;
-    }
+  
+  const upsertProject = useCallback(
+    async (
+      v: { id?: string; name: string; description?: string | null; team_id?: string | null }
+    ): Promise<Project | null> => {
+      if (!orgId) throw new Error("orgId is null");
 
-    const row = toSafeProject(data as DbProjectRow);
-    if (!row) {
-      // RPC retorna expected status
-      if (v.id) {
-        setProjects(prev => prev.map(p => (p.id === v.id ? { ...p, ...v } as Project : p)));
-      } else {
-        const newProj: Project = {
-          id: crypto.randomUUID(),
-          name: v.name,
-          description: v.description ?? null,
-          team_id: v.team_id ?? null,
-          org_id: orgId,
-        };
-        setProjects(prev => [newProj, ...prev]);
+      const args: UpsertArgs = {
+        _org_id: orgId as string,
+        _name: v.name,
+        ...(v.id ? { _id: v.id } : {}),
+        ...(v.team_id ? { _team_id: v.team_id } : {}),
+        ...(v.description ? { _description: v.description } : {}),
+      };
+
+      const { data, error } = await supabase.rpc("project_upsert", args);
+      if (error) {
+        console.error("[Projects] project_upsert error", error);
+        throw error;
       }
-    } else {
+
+      const row = toSafeProject(data as DbProjectRow); // Project | null
+
+      if (!row) {
+        // If RPC didn’t return a row, keep local state consistent and still return a usable Project
+        if (v.id) {
+          const fallback: Project = {
+            id: v.id,
+            name: v.name,
+            description: v.description ?? null,
+            team_id: v.team_id ?? null,
+            org_id: orgId,
+          };
+          setProjects(prev => prev.map(p => (p.id === v.id ? { ...p, ...fallback } : p)));
+          return fallback;
+        } else {
+          const newProj: Project = {
+            id: crypto.randomUUID(),
+            name: v.name,
+            description: v.description ?? null,
+            team_id: v.team_id ?? null,
+            org_id: orgId,
+          };
+          setProjects(prev => [newProj, ...prev]);
+          return newProj;
+        }
+      }
+
+      // Row came back from RPC
       setProjects(prev => {
         const exists = prev.some(p => p.id === row.id);
         return exists ? prev.map(p => (p.id === row.id ? row : p)) : [row, ...prev];
       });
-    }
-    setEditing(null);
-  }, [orgId]);
+      return row;
+    },
+    [orgId]
+  );
 
   const deleteProject = useCallback(async (id: string) => {
     const { error } = await supabase.rpc("project_delete", { _id: id });
@@ -157,16 +200,14 @@ export default function ProjectsPage() {
     setProjects(prev => prev.filter(p => p.id !== id));
   }, []);
 
-  // ---------- render ----------
-
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 grid gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Projects</h1>
+        <h1 className="text-xl font-semibold">Projetos</h1>
         <div className="flex items-center gap-2">
           <input
             className="input w-72"
-            placeholder="Search projects"
+            placeholder="Procurar por projetos"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -175,17 +216,17 @@ export default function ProjectsPage() {
               className="btn btn-primary"
               onClick={() => setEditing({ name: "", description: "", team_id: null } as Project)}
             >
-              + Create
+              +Criar
             </button>
           </RoleGate>
         </div>
       </div>
-
+{/*
       <section className="grid gap-2">
-        <div className="text-sm text-muted">You’re affiliated to</div>
+        <div className="text-sm text-muted">Voce e afiliado a estes projetos:</div>
         <div className="grid gap-3">
           {myProjects.length === 0 ? (
-            <div className="card p-4 text-sm text-muted">You aren’t a member of any project yet.</div>
+            <div className="card p-4 text-sm text-muted">Voce ainda não e membro de nenhum projeto.</div>
           ) : (
             myProjects.map(p => (
               <ProjectRow
@@ -199,12 +240,12 @@ export default function ProjectsPage() {
           )}
         </div>
       </section>
-
+*/}
       <section className="grid gap-2">
-        <div className="text-sm text-muted">Other existing projects</div>
+        <div className="text-sm text-muted">Outros projetos existentes.</div>
         <div className="grid gap-3">
           {otherProjects.length === 0 ? (
-            <div className="card p-4 text-sm text-muted">No other projects found.</div>
+            <div className="card p-4 text-sm text-muted">Nenhum projeto encontrado.</div>
           ) : (
             otherProjects.map(p => (
               <ProjectRow
@@ -222,13 +263,20 @@ export default function ProjectsPage() {
       <RoleGate required="admin">
         {editing && (
           <div className="card p-4">
-            <div className="text-sm text-muted mb-2">{editing.id ? "Edit Project" : "Create Project"}</div>
+            <div className="text-sm text-muted mb-2">{editing.id ? "Editar Projeto" : "Criar projeto"}</div>
             <ProjectForm
               initial={editing}
               loadTeams={loadTeams}
-              submitLabel={editing.id ? "Save changes" : "Create"}
-              onSubmit={upsertProject}
+              loadProjectTeamIds={loadProjectTeamIds}
+              submitLabel={editing.id ? "Salvar mudanças" : "Criar"}
+              onSubmit={async (v, selectedTeamIds) => {
+                const saved = await upsertProject(v);
+                const id = saved?.id ?? v.id;
+                if (id) { await setProjectTeams(id, selectedTeamIds); }
+                setEditing(null);
+              }}
               onCancel={() => setEditing(null)}
+              {...(editing.id ? { onDelete: async () => { await deleteProject(editing.id!); setEditing(null); } } : {})}
             />
           </div>
         )}
@@ -250,10 +298,9 @@ function ProjectRow({ p, onView, onEdit, onDelete }: {
         {p.description && <div className="text-sm text-muted">{p.description}</div>}
       </div>
       <div className="flex gap-2">
-        <button className="btn" onClick={onView}>View</button>
+        <button className="btn" onClick={onView}>Visualizar</button>
         <RoleGate required="admin">
-          <button className="btn" onClick={onEdit}>Edit</button>
-          <button className="btn text-red-600" onClick={onDelete}>Delete</button>
+          <button className="btn" onClick={onEdit}>Editar</button>
         </RoleGate>
       </div>
     </div>
@@ -264,57 +311,112 @@ function ProjectForm({
   initial,
   onSubmit,
   onCancel,
+  onDelete,
   submitLabel,
   loadTeams,
+  loadProjectTeamIds,
 }: {
-  initial: { id?: string; name: string; description?: string | null; team_id: string | null };
-  onSubmit: (v: { id?: string; name: string; description?: string | null; team_id: string | null }) => Promise<void> | void;
+  initial: { id?: string; name: string; description?: string | null; team_id?: string | null };
+  onSubmit: (
+    v: { id?: string; name: string; description?: string | null; team_id?: string | null },
+    selectedTeamIds: string[]
+  ) => Promise<void> | void;
   onCancel: () => void;
+  onDelete?: () => void | Promise<void>;
   submitLabel: string;
   loadTeams: () => Promise<Team[]>;
+  loadProjectTeamIds: (projectId: string) => Promise<string[]>;
 }) {
   const [name, setName] = useState(initial.name ?? "");
   const [description, setDescription] = useState(initial.description ?? "");
-  const [teamId, setTeamId] = useState<string | "">(initial.team_id ?? "");
   const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(true);
 
   useEffect(() => {
     let active = true;
-    loadTeams().then(rows => { if (active) setTeams(rows); }).catch(console.error);
+    (async () => {
+      // load all org teams
+      const rows = await loadTeams();
+      if (!active) return;
+      setTeams(rows);
+
+      // preselect project teams if editing
+      if (initial.id) {
+        const ids = await loadProjectTeamIds(initial.id);
+        if (!active) return;
+        setSelectedTeamIds(ids);
+      }
+      setLoadingTeams(false);
+    })().catch(err => {
+      console.error("[ProjectForm] load teams / project team ids error", err);
+      setTeams([]);
+      setSelectedTeamIds([]);
+      setLoadingTeams(false);
+    });
     return () => { active = false; };
-  }, [loadTeams]);
+  }, [initial.id, loadTeams, loadProjectTeamIds]);
+
+  function toggleTeam(id: string) {
+    setSelectedTeamIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    const payload = {
-      ...(initial?.id ? { id: initial.id } : {}),
-      name,
-      description: description || null,
-      team_id: (teamId as string) || null,
-    };
-    await onSubmit(payload);
+    await onSubmit(
+      {
+        ...(initial?.id ? { id: initial.id } : {}),
+        name,
+        description: description || null,
+      },
+      selectedTeamIds
+    );
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-3 max-w-xl">
+    <form onSubmit={submit} className="grid gap-3 max-w-2xl">
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Name</span>
+        <span className="text-sm opacity-80">Nome</span>
         <input className="input" value={name} onChange={e => setName(e.target.value)} required />
       </label>
       <label className="grid gap-1">
-        <span className="text-sm opacity-80">Description</span>
+        <span className="text-sm opacity-80">Descrição</span>
         <textarea className="input" rows={3} value={description ?? ""} onChange={e => setDescription(e.target.value)} />
       </label>
-      <label className="grid gap-1">
-        <span className="text-sm opacity-80">Assign team</span>
-        <select className="select w-64" value={teamId} onChange={e => setTeamId(e.target.value)}>
-          <option value="">No team</option>
-          {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-      </label>
+
+      <div className="grid gap-2">
+        <div className="text-sm opacity-80">Selecione as equipes desejadas</div>
+        <div className="border rounded p-2 grid gap-1 max-h-56 overflow-auto">
+          {loadingTeams ? (
+            <div className="text-sm text-muted">Carregando equipes...</div>
+          ) : teams.length === 0 ? (
+            <div className="text-sm text-muted">Nenhuma equipe disponivel.</div>
+          ) : (
+            teams.map(t => (
+              <label key={t.id} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={selectedTeamIds.includes(t.id)}
+                  onChange={() => toggleTeam(t.id)}
+                />
+                <span className="font-medium">{t.name}</span>
+                {t.description && <span className="text-xs opacity-70">— {t.description}</span>}
+              </label>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <button type="submit" className="btn btn-primary">{submitLabel}</button>
-        <button type="button" className="btn" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn" onClick={onCancel}>Cancelar</button>
+        {onDelete && initial.id ? (
+          <button type="button" className="btn text-red-600" onClick={() => onDelete()}>
+            Deletar projeto
+          </button>
+        ) : null}
       </div>
     </form>
   );

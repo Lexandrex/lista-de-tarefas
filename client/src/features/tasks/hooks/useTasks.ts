@@ -22,8 +22,8 @@ export type Task = {
 };
 
 export type LiteProject = { id: string; name: string; team_id: string | null };
-export type LiteTeam    = { id: string; name: string };
-export type LiteMember  = { id: string; name: string | null; email: string | null };
+export type LiteTeam = { id: string; name: string };
+export type LiteMember = { id: string; name: string | null; email: string | null };
 
 const qk = {
   all: (orgId: string | null) => ["tasks", orgId] as const,

@@ -26,10 +26,10 @@ export default function Sidebar() {
       <nav style={{ display: "grid", gap: 6 }}>
         <NavItem to="/" label="Home" />
         <RoleGate required="admin">
-          <NavItem to="/teams" label="Teams" />
+          <NavItem to="/teams" label="Equipes" />
         </RoleGate>
-        <NavItem to="/projects" label="Projects" />
-        <NavItem to="/tasks" label="Tasks" />
+        <NavItem to="/projects" label="Projetos" />
+        <NavItem to="/tasks" label="Tarefas" />
         {
         //<NavItem to="/agenda" label="Agenda" />
         }

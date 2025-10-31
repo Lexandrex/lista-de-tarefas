@@ -6,5 +6,5 @@ export const supabase = createClient<Database>(
   import.meta.env.VITE_SUPABASE_ANON_KEY!,
   { db: { schema: 'api' } }
 );
-const { data } = await supabase.from('teams').select('*');
+// const { data } = await supabase.from('teams').select('*');
 // fazer as outras apis...
