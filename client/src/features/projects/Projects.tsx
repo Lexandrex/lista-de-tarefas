@@ -5,14 +5,14 @@ import { useAuth } from "@/app/useAuth";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/lib/supabase/types";
 
-type DbProjectRow   = Database["api"]["Views"]["projects"]["Row"];
-type DbTeamRow      = Database["api"]["Views"]["teams"]["Row"];
-type DbTeamMember   = Database["api"]["Views"]["team_members"]["Row"];
+type DbProjectRow = Database["api"]["Views"]["projects"]["Row"];
+type DbTeamRow = Database["api"]["Views"]["teams"]["Row"];
+type DbTeamMember = Database["api"]["Views"]["team_members"]["Row"];
 type UpsertArgs = Database["api"]["Functions"]["project_upsert"]["Args"];
 type SetTeamsArgs = Database["api"]["Functions"]["project_set_teams"]["Args"];
 
 type Project = { id: string; name: string; description?: string | null; team_id: string | null; org_id?: string | null };
-type Team    = { id: string; name: string; description?: string | null };
+type Team = { id: string; name: string; description?: string | null };
 
 export default function ProjectsPage() {
   const nav = useNavigate();
@@ -109,7 +109,6 @@ export default function ProjectsPage() {
       .filter((x): x is Team => x != null);
   }, [orgId]);
 
-// load team ids currently linked to the project (for checkbox preselection in Edit)
   const loadProjectTeamIds = useCallback(async (projectId: string): Promise<string[]> => {
     if (!orgId) return [];
     const { data, error } = await supabase
@@ -121,7 +120,6 @@ export default function ProjectsPage() {
     return ((data ?? []) as { team_id: string | null }[]).map(r => r.team_id).filter((x): x is string => !!x);
   }, [orgId]);
 
-  // sync associations via RPC
   const setProjectTeams = useCallback(async (projectId: string, teamIds: string[]) => {
     if (!orgId) throw new Error("orgId is null");
     const args: SetTeamsArgs = {
@@ -154,10 +152,9 @@ export default function ProjectsPage() {
         throw error;
       }
 
-      const row = toSafeProject(data as DbProjectRow); // Project | null
+      const row = toSafeProject(data as DbProjectRow);
 
       if (!row) {
-        // If RPC didn’t return a row, keep local state consistent and still return a usable Project
         if (v.id) {
           const fallback: Project = {
             id: v.id,
@@ -242,7 +239,7 @@ export default function ProjectsPage() {
       </section>
 */}
       <section className="grid gap-2">
-        <div className="text-sm text-muted">Outros projetos existentes.</div>
+        <div className="text-sm text-muted">Projetos existentes.</div>
         <div className="grid gap-3">
           {otherProjects.length === 0 ? (
             <div className="card p-4 text-sm text-muted">Nenhum projeto encontrado.</div>
