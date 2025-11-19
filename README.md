@@ -1,8 +1,8 @@
 # Projeto de Gestão de Equipes e Atividades
 
-##PAC - Projeto de Aprendizagem Colaborativa Extensionista do Curso de Engenharia de Software da Católica de Santa Catarina
-###Autores: Alexandre Sebastian Basso Muller e Felipe Obertier Gesser 
-###Professores orientadores: Luiz Carlos Camargo e Claudinei Dias
+### PAC - Projeto de Aprendizagem Colaborativa Extensionista do Curso de Engenharia de Software da Católica de Santa Catarina
+### Autores: Alexandre Sebastian Basso Muller e Felipe Obertier Gesser 
+### Professores orientadores: Luiz Carlos Camargo e Claudinei Dias
 
 ## 2. Introdução
 A loja Atual 12&20 é um estabelecimento varejista que oferece uma variedade de produtos, desde itens alimentícios até cosméticos, todos vendidos a preços fixos de 12 ou 20 reais, sem exceções. 
