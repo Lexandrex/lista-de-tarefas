@@ -170,9 +170,9 @@ export function useCreateTask(orgId: string | null) {
         _title: v.title,
         _status: toDB(v.status ?? "todo"),
         ...(v.description !== undefined ? { _description: v.description ?? "" } : {}),
-        ...(v.due_date != null ? { _due_date: v.due_date } : {}),
-        ...(v.assignee_id != null ? { _assignee_id: v.assignee_id } : {}),
-        ...(v.team_id ? { _team_id: v.team_id } : {}),
+        ...(v.due_date != null && v.due_date !== "" ? { _due_date: v.due_date } : {}),
+        ...(v.assignee_id != null && v.assignee_id !== "" ? { _assignee_id: v.assignee_id } : {}),
+        ...(v.team_id != null && v.team_id !== "" ? { _team_id: v.team_id } : {}),
       } as Database["api"]["Functions"]["task_upsert"]["Args"];
 
       const { data, error } = await supabase.rpc("task_upsert", args);

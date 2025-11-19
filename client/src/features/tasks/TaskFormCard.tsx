@@ -79,11 +79,18 @@ export function TaskFormCard({
       status,
       due_date: due || null,
       project_id: projectId as string,
-      team_id: (teamId as string) || null,
-      assignee_id: (assigneeId as string) || null,
+      team_id: teamId || null,
+      assignee_id: assigneeId || null,
     };
-    await onSubmit(payload);
+
+    try {
+      await onSubmit(payload);
+    } catch (error) {
+      console.error("Erro ao criar tarefa:", error);
+      alert("Erro ao criar tarefa: " + (error instanceof Error ? error.message : JSON.stringify(error)));
+    }
   }
+
 
   return (
     <form onSubmit={submit} className="grid gap-3 max-w-xl">
