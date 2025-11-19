@@ -1,6 +1,17 @@
 # Projeto de Gestão de Equipes e Atividades
 
+##PAC - Projeto de Aprendizagem Colaborativa Extensionista do Curso de Engenharia de Software da Católica de Santa Catarina
+###Autores: Alexandre Sebastian Basso Muller e Felipe Obertier Gesser 
+###Professores orientadores: Luiz Carlos Camargo e Claudinei Dias
+
 ## 2. Introdução
+A loja Atual 12&20 é um estabelecimento varejista que oferece uma variedade de produtos, desde itens alimentícios até cosméticos, todos vendidos a preços fixos de 12 ou 20 reais, sem exceções. 
+
+Nós, alunos do PAC, já havíamos desenvolvido anteriormente um software de gestão de caixa para este estabelecimento, solucionando problemas relacionados ao fluxo de mercadorias e dinheiro. Agora, fomos novamente requisitados para resolver outra problemática. 
+
+Observamos que a loja enfrenta dificuldades de gestão devido à indisponibilidade dos donos, resultando em uma distribuição ineficaz de tarefas e na falta de percepção sobre a situação atual do negócio. 
+
+Para enfrentar esse desafio, decidimos desenvolver um software de criação de tarefas e atribuição de equipes. Com essa ferramenta, mesmo que os donos não estejam presentes, poderão acompanhar remotamente as atividades em andamento, organizar eventos, gerenciar a estrutura interna da loja e implementar mudanças necessárias. O sistema também permitirá o gerenciamento presencial por meio de um gerente local. 
 
 ### 2.1 Apresentação do Projeto
 Este projeto consiste no desenvolvimento de uma aplicação web voltada para a gestão de equipes e atividades. A ferramenta permitirá o registro de usuários, autenticação, atribuição de hierarquia e acompanhamento do progresso de atividades. O objetivo é fornecer uma plataforma eficiente para organização de tarefas e equipes, garantindo flexibilidade e personalização para os usuários.
