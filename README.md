@@ -85,3 +85,6 @@ O software será usado por organizações, equipes de trabalho e indivíduos que
   - Criação do banco de dados
   - Testes unitários
   - Desenvolvimento do front-end
+
+  ![Imagem do WhatsApp de 2025-11-19 à(s) 11 58 44_69b4d356](https://github.com/user-attachments/assets/a9bee048-c537-41a0-9c4c-7005bbb023bb)
+
