@@ -86,5 +86,16 @@ O software será usado por organizações, equipes de trabalho e indivíduos que
   - Testes unitários
   - Desenvolvimento do front-end
 
-  ![Imagem do WhatsApp de 2025-11-19 à(s) 11 58 44_69b4d356](https://github.com/user-attachments/assets/a9bee048-c537-41a0-9c4c-7005bbb023bb)
+###Winframe 
+##Home page após login: 
+![Imagem do WhatsApp de 2025-11-14 à(s) 16 07 00_7fda7883](https://github.com/user-attachments/assets/6ca368ca-9a88-45cf-bfa0-8c1f8ccaee38)
 
+##Telas para visualização e criação de atividades equipes e projetos: 
+![Imagem do WhatsApp de 2025-11-14 à(s) 16 07 26_e0ab98d9](https://github.com/user-attachments/assets/801c1855-5cfb-467e-b4d5-71efc94aad5b)
+![Imagem do WhatsApp de 2025-11-14 à(s) 16 07 42_b7ec637e](https://github.com/user-attachments/assets/8dcbdfa8-0206-4008-af62-cfa24f3d15d0)
+![Imagem do WhatsApp de 2025-11-14 à(s) 16 07 52_ec2e9c00](https://github.com/user-attachments/assets/a1bd8fd3-9b3d-49b1-943b-8d2d4cc43370)
+
+##Telas de criação: 
+![Imagem do WhatsApp de 2025-11-19 à(s) 11 58 44_1e596019](https://github.com/user-attachments/assets/e3ccbda2-9400-41ae-a945-170eb24fde98)
+![Imagem do WhatsApp de 2025-11-19 à(s) 11 59 03_a3ec8764](https://github.com/user-attachments/assets/0a90824f-a266-4e94-8cd2-5548e0454f7b)
+![Imagem do WhatsApp de 2025-11-19 à(s) 11 59 36_a8199582](https://github.com/user-attachments/assets/b295d597-4fe0-45ec-b117-1e5ff94d381b)
